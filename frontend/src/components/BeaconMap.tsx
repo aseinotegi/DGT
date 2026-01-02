@@ -15,6 +15,7 @@ interface GeoJSONFeature {
         source: string
         incident_type: string
         road_name: string | null
+        road_type: string | null
         severity: string | null
         municipality: string | null
         province: string | null
@@ -24,6 +25,9 @@ interface GeoJSONFeature {
         activation_time: string | null
         created_at: string | null
         updated_at: string | null
+        source_identification: string | null
+        detailed_cause_type: string | null
+        is_v16: boolean
     }
 }
 
@@ -47,11 +51,11 @@ interface BeaconMapProps {
 const CENTER: LatLngTuple = [40.4168, -3.7038]
 const ZOOM = 6
 
-const beaconIcon = L.icon({
-    iconUrl: '/baliza.jpg',
-    iconSize: [28, 28],
-    iconAnchor: [14, 28],
-    popupAnchor: [0, -28],
+const getIcon = (url: string) => L.icon({
+    iconUrl: url,
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -32],
 })
 
 const createClusterCustomIcon = (cluster: any) => {
@@ -74,17 +78,6 @@ const createClusterCustomIcon = (cluster: any) => {
     })
 }
 
-const INCIDENT_LABELS: Record<string, string> = {
-    roadMaintenance: 'Obras',
-    vehicleBreakdown: 'Vehiculo averiado',
-    accident: 'Accidente',
-    weatherCondition: 'Meteorologia',
-    infrastructureDamageObstruction: 'Obstruccion',
-    ConstructionWorks: 'Construccion',
-    MaintenanceWorks: 'Mantenimiento',
-    unknown: 'Baliza activa',
-}
-
 function formatDateTime(isoString: string | null): string {
     if (!isoString) return ''
     try {
@@ -102,22 +95,14 @@ function formatDateTime(isoString: string | null): string {
 }
 
 function BeaconMap({ data }: BeaconMapProps) {
-    const getLabel = (type: string) => INCIDENT_LABELS[type] || 'Baliza activa'
-
-    const openNavigation = (lat: number, lng: number) => {
-        window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank')
-    }
+    const v16Icon = getIcon('/baliza.jpg')
 
     const openGoogleMaps = (lat: number, lng: number) => {
         window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank')
     }
 
-    const openWaze = (lat: number, lng: number) => {
-        window.open(`https://www.waze.com/ul?ll=${lat},${lng}&navigate=yes`, '_blank')
-    }
-
     const shareLocation = async (lat: number, lng: number, road: string | null) => {
-        const text = `Baliza V16${road ? ` en ${road}` : ''}: https://www.google.com/maps?q=${lat},${lng}`
+        const text = `Baliza V16 activa${road ? ` en ${road}` : ''}: https://www.google.com/maps?q=${lat},${lng}`
         if (navigator.share) {
             await navigator.share({ text })
         } else {
@@ -149,7 +134,7 @@ function BeaconMap({ data }: BeaconMapProps) {
                 {data?.features.map((feature) => {
                     const [lng, lat] = feature.geometry.coordinates
                     const {
-                        incident_type, road_name, municipality, province,
+                        road_name, municipality, province,
                         direction, pk, autonomous_community, activation_time
                     } = feature.properties
 
@@ -157,92 +142,25 @@ function BeaconMap({ data }: BeaconMapProps) {
                         <Marker
                             key={feature.properties.id}
                             position={[lat, lng]}
-                            icon={beaconIcon}
+                            icon={v16Icon}
                         >
-                            <Popup>
-                                <div className="popup-content">
-                                    <div className="popup-header">
-                                        {getLabel(incident_type)}
+                            <Popup className="popup-minimal">
+                                <div className="pm">
+                                    <div className="pm-header">
+                                        <img src="/baliza.jpg" alt="" />
+                                        <span>Baliza activa</span>
                                     </div>
-
-                                    <div className="popup-body">
-                                        {road_name && (
-                                            <div className="popup-row">
-                                                <span className="label">Carretera</span>
-                                                <span className="value">{road_name}</span>
-                                            </div>
-                                        )}
-
-                                        {pk && (
-                                            <div className="popup-row">
-                                                <span className="label">PK</span>
-                                                <span className="value">{pk}</span>
-                                            </div>
-                                        )}
-
-                                        {direction && (
-                                            <div className="popup-row">
-                                                <span className="label">Sentido</span>
-                                                <span className="value">{direction}</span>
-                                            </div>
-                                        )}
-
-                                        {municipality && (
-                                            <div className="popup-row">
-                                                <span className="label">Municipio</span>
-                                                <span className="value">{municipality}</span>
-                                            </div>
-                                        )}
-
-                                        {province && (
-                                            <div className="popup-row">
-                                                <span className="label">Provincia</span>
-                                                <span className="value">{province}</span>
-                                            </div>
-                                        )}
-
-                                        {autonomous_community && (
-                                            <div className="popup-row">
-                                                <span className="label">Comunidad</span>
-                                                <span className="value">{autonomous_community}</span>
-                                            </div>
-                                        )}
-
-                                        {activation_time && (
-                                            <div className="popup-row">
-                                                <span className="label">Desde</span>
-                                                <span className="value">{formatDateTime(activation_time)}</span>
-                                            </div>
-                                        )}
+                                    <div className="pm-body">
+                                        <p><b>Causa:</b> Vehículo detenido</p>
+                                        {road_name && <p><b>Carretera (ppkk):</b> <span className="hl">{road_name}{pk ? ` (PK ${pk})` : ''}</span></p>}
+                                        {direction && <p><b>Sentido:</b> {direction}</p>}
+                                        {activation_time && <p><b>Desde:</b> <span className="hl">{formatDateTime(activation_time)}</span></p>}
+                                        {(province || autonomous_community) && <p><b>Provincia:</b> {province || autonomous_community}</p>}
+                                        {municipality && <p><b>Municipio:</b> {municipality}</p>}
                                     </div>
-
-                                    <div className="popup-actions">
-                                        <button
-                                            className="popup-btn"
-                                            onClick={() => openGoogleMaps(lat, lng)}
-                                        >
-                                            Mapas
-                                        </button>
-                                        <button
-                                            className="popup-btn"
-                                            onClick={() => openNavigation(lat, lng)}
-                                        >
-                                            Google
-                                        </button>
-                                        <button
-                                            className="popup-btn"
-                                            onClick={() => openWaze(lat, lng)}
-                                        >
-                                            Waze
-                                        </button>
-                                    </div>
-                                    <div className="popup-actions">
-                                        <button
-                                            className="popup-btn popup-btn-primary"
-                                            onClick={() => shareLocation(lat, lng, road_name)}
-                                        >
-                                            Compartir
-                                        </button>
+                                    <div className="pm-actions">
+                                        <button onClick={() => openGoogleMaps(lat, lng)}>Mapas</button>
+                                        <button onClick={() => shareLocation(lat, lng, road_name)}>Compartir</button>
                                     </div>
                                 </div>
                             </Popup>

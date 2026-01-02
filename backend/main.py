@@ -87,9 +87,10 @@ async def lifespan(app: FastAPI):
     
     # Schedule sync task
     scheduler.add_job(
-        lambda: asyncio.create_task(run_sync_task(engine)),
+        run_sync_task,
         "interval",
         seconds=settings.sync_interval_seconds,
+        args=[engine],
         id="sync_dgt_data",
         replace_existing=True,
     )
@@ -165,6 +166,14 @@ async def get_beacons(session: Session = Depends(get_session)) -> dict[str, Any]
                 "activation_time": beacon.activation_time.isoformat() if beacon.activation_time else None,
                 "created_at": beacon.created_at.isoformat() if beacon.created_at else None,
                 "updated_at": beacon.updated_at.isoformat() if beacon.updated_at else None,
+                "source_identification": beacon.source_identification,
+                "detailed_cause_type": beacon.detailed_cause_type,
+                "is_v16": (
+                    beacon.incident_type.lower() == "accident" or
+                    beacon.incident_type.lower() == "vehicleobstruction" or
+                    (beacon.incident_type.lower() == "environmentalobstruction" and beacon.detailed_cause_type == "vehicleStuck") or
+                    (beacon.incident_type.lower() == "obstruction" and beacon.detailed_cause_type == "vehicleStuck")
+                )
             }
         }
         features.append(feature)
@@ -309,3 +318,75 @@ async def get_sync_logs(
         "count": len(result),
         "logs": result,
     }
+
+
+@app.get("/api/v1/alerts/vulnerable")
+async def get_vulnerable_beacons(
+    min_score: float = 50.0,
+    session: Session = Depends(get_session)
+) -> dict[str, Any]:
+    """Get beacons with high vulnerability scores.
+    
+    Args:
+        min_score: Minimum vulnerability score (0-100) to include.
+        
+    Returns:
+        List of vulnerable beacons with scores and risk factors.
+    """
+    from vulnerability import analyze_beacon_vulnerability, HIGH_RISK_THRESHOLD
+    
+    # Query active vehicleObstruction beacons (V16)
+    beacons = session.exec(
+        select(Beacon).where(
+            Beacon.is_active == True,
+            Beacon.incident_type == 'vehicleObstruction'
+        )
+    ).all()
+    
+    vulnerable = []
+    for beacon in beacons:
+        # Convert to dict for analysis
+        beacon_data = {
+            'id': beacon.id,
+            'external_id': beacon.external_id,
+            'lat': beacon.lat,
+            'lng': beacon.lng,
+            'road_name': beacon.road_name,
+            'road_type': beacon.road_type,
+            'municipality': beacon.municipality,
+            'province': beacon.province,
+            'activation_time': beacon.activation_time,
+        }
+        
+        score = analyze_beacon_vulnerability(beacon_data)
+        
+        if score.total_score >= min_score:
+            vulnerable.append({
+                'beacon_id': score.beacon_id,
+                'external_id': score.external_id,
+                'lat': score.lat,
+                'lng': score.lng,
+                'road_name': score.road_name,
+                'municipality': score.municipality,
+                'province': score.province,
+                'total_score': score.total_score,
+                'risk_level': score.risk_level,
+                'risk_factors': score.risk_factors,
+                'minutes_active': score.minutes_active,
+                'scores': {
+                    'isolation': score.isolation_score,
+                    'exposure': score.exposure_score,
+                    'nighttime': score.nighttime_score,
+                    'road_type': score.road_type_score,
+                }
+            })
+    
+    # Sort by score descending
+    vulnerable.sort(key=lambda x: x['total_score'], reverse=True)
+    
+    return {
+        'count': len(vulnerable),
+        'threshold': min_score,
+        'alerts': vulnerable,
+    }
+

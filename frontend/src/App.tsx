@@ -24,6 +24,9 @@ interface GeoJSONFeature {
         activation_time: string | null
         created_at: string | null
         updated_at: string | null
+        source_identification: string | null
+        detailed_cause_type: string | null
+        is_v16: boolean
     }
 }
 
@@ -40,20 +43,24 @@ interface GeoJSONData {
     }
 }
 
-// Translations for display
-const INCIDENT_TYPES: Record<string, string> = {
-    'roadMaintenance': 'Obras',
-    'accident': 'Accidente',
-    'environmentalObstruction': 'Obstáculo',
-    'roadOrCarriagewayOrLaneManagement': 'Gestión vía',
+interface VulnerableAlert {
+    beacon_id: string
+    external_id: string
+    lat: number
+    lng: number
+    road_name: string | null
+    municipality: string | null
+    province: string | null
+    total_score: number
+    risk_level: string
+    risk_factors: string[]
+    minutes_active: number
 }
 
-const ROAD_TYPES: Record<string, string> = {
-    'autopista': 'Autopista',
-    'nacional': 'Nacional',
-    'autonomica': 'Autonómica',
-    'provincial': 'Provincial',
-    'local': 'Local',
+interface AlertsResponse {
+    count: number
+    threshold: number
+    alerts: VulnerableAlert[]
 }
 
 function App() {
@@ -61,10 +68,10 @@ function App() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
+    const [alerts, setAlerts] = useState<VulnerableAlert[]>([])
+    const [showAlertPanel, setShowAlertPanel] = useState(false)
 
-    // Filter state
-    const [filterIncidentType, setFilterIncidentType] = useState<string>('')
-    const [filterRoadType, setFilterRoadType] = useState<string>('')
+    const [filterV16Only] = useState<boolean>(true)
 
     const fetchBeacons = useCallback(async () => {
         try {
@@ -84,109 +91,100 @@ function App() {
         }
     }, [])
 
+    const fetchAlerts = useCallback(async () => {
+        try {
+            const response = await fetch('/api/v1/alerts/vulnerable?min_score=50')
+            if (!response.ok) return
+            const json: AlertsResponse = await response.json()
+            setAlerts(json.alerts)
+            // Auto-show panel if high-risk alerts found
+            if (json.alerts.some(a => a.risk_level === 'critical' || a.risk_level === 'high')) {
+                setShowAlertPanel(true)
+            }
+        } catch (err) {
+            console.error('Error fetching alerts:', err)
+        }
+    }, [])
+
     useEffect(() => {
         fetchBeacons()
-        const interval = setInterval(fetchBeacons, 60000)
-        return () => clearInterval(interval)
-    }, [fetchBeacons])
+        fetchAlerts()
+        const beaconInterval = setInterval(fetchBeacons, 60000)
+        const alertInterval = setInterval(fetchAlerts, 30000)
+        return () => {
+            clearInterval(beaconInterval)
+            clearInterval(alertInterval)
+        }
+    }, [fetchBeacons, fetchAlerts])
 
-    // Filter data
     const filteredData = useMemo(() => {
         if (!data) return null
 
         let filtered = data.features
 
-        if (filterIncidentType) {
-            filtered = filtered.filter(f => f.properties.incident_type === filterIncidentType)
-        }
-        if (filterRoadType) {
-            filtered = filtered.filter(f => f.properties.road_type === filterRoadType)
+        if (filterV16Only) {
+            filtered = filtered.filter((f: GeoJSONFeature) =>
+                f.properties.incident_type === 'vehicleObstruction'
+            )
         }
 
         return {
             ...data,
-            features: filtered,
-            metadata: {
-                ...data.metadata,
-                total_count: filtered.length,
-            }
+            features: filtered
         }
-    }, [data, filterIncidentType, filterRoadType])
+    }, [data, filterV16Only])
 
-    // Get unique values for filters
-    const incidentTypes = useMemo(() => {
-        if (!data) return []
-        const types = new Set(data.features.map(f => f.properties.incident_type))
-        return Array.from(types).sort()
-    }, [data])
+    const filteredCount = filteredData?.features.length || 0
+    const criticalAlerts = alerts.filter(a => a.risk_level === 'critical' || a.risk_level === 'high')
 
-    const roadTypes = useMemo(() => {
-        if (!data) return []
-        const types = new Set(data.features.map(f => f.properties.road_type).filter(Boolean))
-        return Array.from(types).sort()
-    }, [data])
-
-    const formatTime = (date: Date) => {
-        return date.toLocaleTimeString('es-ES', {
-            hour: '2-digit',
-            minute: '2-digit',
-        })
+    if (loading && !data) {
+        return <div className="loading">Cargando mapa de incidencias...</div>
     }
 
-    const hasFilters = filterIncidentType || filterRoadType
-
     return (
-        <>
-            <header className="header">
-                <h1 className="header-title">Balizas V16</h1>
-
-                <div className="header-info">
-                    <span className="beacon-count">
-                        {filteredData?.metadata.total_count ?? '-'}
-                        {hasFilters ? ` / ${data?.metadata.total_count ?? '-'}` : ''} activas
+        <div className="app-container">
+            <header>
+                <div className="header-left">
+                    <img src="/baliza.jpg" className="v16-icon" alt="V16" />
+                    <h1>Vehículos detenidos</h1>
+                </div>
+                <div className="stats">
+                    <span className="count">
+                        {filteredCount} balizas activas
                     </span>
                     {lastUpdate && (
-                        <span className="update-time">Actualizado {formatTime(lastUpdate)}</span>
+                        <span className="last-update">
+                            {lastUpdate.toLocaleTimeString()}
+                        </span>
                     )}
                 </div>
             </header>
 
-            <div className="filter-bar">
-                <select
-                    value={filterIncidentType}
-                    onChange={(e) => setFilterIncidentType(e.target.value)}
-                    className="filter-select"
-                >
-                    <option value="">Todos los tipos</option>
-                    {incidentTypes.map(type => (
-                        <option key={type} value={type}>
-                            {INCIDENT_TYPES[type] || type}
-                        </option>
-                    ))}
-                </select>
-
-                <select
-                    value={filterRoadType}
-                    onChange={(e) => setFilterRoadType(e.target.value)}
-                    className="filter-select"
-                >
-                    <option value="">Todas las vías</option>
-                    {roadTypes.map(type => (
-                        <option key={type} value={type as string}>
-                            {ROAD_TYPES[type as string] || type}
-                        </option>
-                    ))}
-                </select>
-
-                {hasFilters && (
-                    <button
-                        onClick={() => { setFilterIncidentType(''); setFilterRoadType(''); }}
-                        className="filter-clear"
-                    >
-                        Limpiar
-                    </button>
-                )}
-            </div>
+            {/* Alert Panel - Simple version */}
+            {showAlertPanel && criticalAlerts.length > 0 && (
+                <div className="alert-simple">
+                    <div className="alert-simple-header">
+                        <span>Posibles personas en apuros</span>
+                        <button onClick={() => setShowAlertPanel(false)}>×</button>
+                    </div>
+                    <ul className="alert-simple-list">
+                        {criticalAlerts.slice(0, 5).map((alert) => (
+                            <li key={alert.beacon_id}>
+                                <div className="alert-simple-location">
+                                    {alert.road_name || 'Carretera'} - {alert.municipality}
+                                </div>
+                                <a
+                                    href={`https://www.google.com/maps?q=${alert.lat},${alert.lng}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    Ver ubicación
+                                </a>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
 
             <main className="map-container">
                 {loading && !data && (
@@ -203,10 +201,21 @@ function App() {
                 )}
 
                 <BeaconMap data={filteredData} />
+
+                {/* Floating Alert Button */}
+                {criticalAlerts.length > 0 && (
+                    <button
+                        className="alert-fab"
+                        onClick={() => setShowAlertPanel(!showAlertPanel)}
+                        title="Personas vulnerables detectadas"
+                    >
+                        <span className="alert-fab-icon">⚠</span>
+                        <span className="alert-fab-count">{criticalAlerts.length}</span>
+                    </button>
+                )}
             </main>
-        </>
+        </div>
     )
 }
 
 export default App
-

@@ -26,6 +26,8 @@ class ParsedBeacon:
     pk: Optional[str] = None
     autonomous_community: Optional[str] = None
     activation_time: Optional[datetime] = None
+    source_identification: Optional[str] = None
+    detailed_cause_type: Optional[str] = None
 
 
 @dataclass
@@ -162,10 +164,28 @@ def parse_datex_v36(xml_content: bytes) -> list[ParsedBeacon]:
             pk = None
             autonomous_community = None
             activation_time = None
+            source_identification = None
+            detailed_cause_type = None
             
             # Get activation time
             time_str = record.findtext(".//sit:situationRecordCreationTime", namespaces=NS_V36)
             activation_time = parse_datetime(time_str)
+            
+            # Get source identification (DGT or DGT3.0 for V16)
+            source_identification = record.findtext(".//com:sourceIdentification", namespaces=NS_V36)
+            
+            # Get detailed cause type (vehicleStuck, roadworks, snowfall, etc)
+            detailed_paths = [
+                ".//sit:vehicleObstructionType",
+                ".//sit:roadMaintenanceType",
+                ".//sit:poorEnvironmentType",
+                ".//sit:infrastructureDamageType",
+            ]
+            for path in detailed_paths:
+                detailed = record.findtext(path, namespaces=NS_V36)
+                if detailed:
+                    detailed_cause_type = detailed
+                    break
             
             # Get road name
             road_name = record.findtext(".//loc:roadName", namespaces=NS_V36)
@@ -193,6 +213,14 @@ def parse_datex_v36(xml_content: bytes) -> list[ParsedBeacon]:
                         lat = float(lat_text)
                         lng = float(lng_text)
             
+            # Fallback: find coords anywhere in the record (for V16 beacons)
+            if lat is None:
+                lat_elem = record.find(".//loc:latitude", NS_V36)
+                lng_elem = record.find(".//loc:longitude", NS_V36)
+                if lat_elem is not None and lng_elem is not None:
+                    lat = float(lat_elem.text)
+                    lng = float(lng_elem.text)
+            
             # Get Spanish extension data (municipality, province)
             ext_point = record.find(".//loc:extendedTpegNonJunctionPoint", NS_V36)
             if ext_point is not None:
@@ -217,6 +245,8 @@ def parse_datex_v36(xml_content: bytes) -> list[ParsedBeacon]:
                     pk=pk,
                     autonomous_community=autonomous_community,
                     activation_time=activation_time,
+                    source_identification=source_identification,
+                    detailed_cause_type=detailed_cause_type,
                 ))
     
     logger.info(f"Parsed {len(beacons)} beacons from v3.6 feed")

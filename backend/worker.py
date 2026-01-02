@@ -158,6 +158,8 @@ def sync_beacons_to_db(session: Session, beacons: list[ParsedBeacon], source: Da
             beacon.pk = parsed.pk
             beacon.autonomous_community = parsed.autonomous_community
             beacon.activation_time = parsed.activation_time
+            beacon.source_identification = parsed.source_identification
+            beacon.detailed_cause_type = parsed.detailed_cause_type
             beacon.updated_at = now
             session.add(beacon)
             updated_count += 1
@@ -178,6 +180,8 @@ def sync_beacons_to_db(session: Session, beacons: list[ParsedBeacon], source: Da
                 pk=parsed.pk,
                 autonomous_community=parsed.autonomous_community,
                 activation_time=parsed.activation_time,
+                source_identification=parsed.source_identification,
+                detailed_cause_type=parsed.detailed_cause_type,
                 created_at=now,
                 updated_at=now,
             )

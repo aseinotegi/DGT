@@ -20,11 +20,14 @@ class BeaconBase(SQLModel):
     severity: Optional[str] = Field(default=None, description="Incident severity")
     municipality: Optional[str] = Field(default=None, description="Municipality name")
     province: Optional[str] = Field(default=None, description="Province name")
-    # New fields
+    # Extended fields
     direction: Optional[str] = Field(default=None, description="Direction: creciente, decreciente, both")
     pk: Optional[str] = Field(default=None, description="Kilometric point (PK)")
     autonomous_community: Optional[str] = Field(default=None, description="Autonomous community")
     activation_time: Optional[datetime] = Field(default=None, description="When the beacon was activated")
+    # DGT3.0 identification (for V16 beacons)
+    source_identification: Optional[str] = Field(default=None, index=True, description="DGT source: DGT or DGT3.0")
+    detailed_cause_type: Optional[str] = Field(default=None, description="Detailed cause: vehicleStuck, roadworks, snowfall, etc.")
 
 
 class Beacon(BeaconBase, table=True):
