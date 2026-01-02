@@ -28,6 +28,14 @@ class ParsedBeacon:
     activation_time: Optional[datetime] = None
 
 
+@dataclass
+class ParseResult:
+    """Result of parsing a DGT XML feed."""
+    beacons: list[ParsedBeacon]
+    publication_time: Optional[datetime] = None
+    source: Optional[str] = None
+
+
 # Namespaces for DATEX II v3.6 (DGT Nacional)
 NS_V36 = {
     "d2": "http://levelC/schema/3/d2Payload",

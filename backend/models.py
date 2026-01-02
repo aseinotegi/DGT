@@ -67,3 +67,47 @@ class BeaconRead(BeaconBase):
     id: uuid.UUID
     created_at: datetime
     updated_at: datetime
+
+
+class SyncLog(SQLModel, table=True):
+    """Log of each sync operation from DGT feeds."""
+    __tablename__ = "sync_logs"
+    
+    id: int = Field(default=None, primary_key=True)
+    source: str = Field(index=True, description="Data source: nacional, pais_vasco, cataluna")
+    sync_started_at: datetime = Field(
+        default_factory=datetime.utcnow,
+        description="When sync started"
+    )
+    sync_completed_at: Optional[datetime] = Field(
+        default=None,
+        description="When sync completed"
+    )
+    publication_time: Optional[datetime] = Field(
+        default=None,
+        description="publicationTime from DGT XML feed"
+    )
+    beacons_in_feed: int = Field(
+        default=0,
+        description="Total beacons in the XML feed"
+    )
+    beacons_created: int = Field(
+        default=0,
+        description="New beacons created"
+    )
+    beacons_updated: int = Field(
+        default=0,
+        description="Existing beacons updated"
+    )
+    beacons_deactivated: int = Field(
+        default=0,
+        description="Beacons marked as inactive"
+    )
+    success: bool = Field(
+        default=True,
+        description="Whether sync completed successfully"
+    )
+    error_message: Optional[str] = Field(
+        default=None,
+        description="Error message if sync failed"
+    )

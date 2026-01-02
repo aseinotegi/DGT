@@ -13,7 +13,7 @@ from sqlmodel import Session, SQLModel, create_engine, select, text
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from config import get_settings
-from models import Beacon
+from models import Beacon, SyncLog
 from worker import run_sync_task
 
 # Configure logging
@@ -255,4 +255,52 @@ async def get_beacon_history(
     return {
         "count": len(history),
         "history": history,
+    }
+
+
+@app.get("/api/v1/sync/logs")
+async def get_sync_logs(
+    session: Session = Depends(get_session),
+    limit: int = 50,
+    source: str = None
+) -> dict[str, Any]:
+    """Get sync operation logs.
+    
+    Args:
+        limit: Maximum number of logs to return.
+        source: Filter by source (nacional, pais_vasco, cataluna).
+    
+    Returns:
+        List of sync logs with metrics.
+    """
+    query = select(SyncLog).order_by(SyncLog.sync_started_at.desc()).limit(limit)
+    
+    if source:
+        query = query.where(SyncLog.source == source)
+    
+    logs = session.exec(query).all()
+    
+    result = []
+    for log in logs:
+        duration_seconds = None
+        if log.sync_completed_at and log.sync_started_at:
+            duration_seconds = (log.sync_completed_at - log.sync_started_at).total_seconds()
+        
+        result.append({
+            "id": log.id,
+            "source": log.source,
+            "sync_started_at": log.sync_started_at.isoformat() if log.sync_started_at else None,
+            "sync_completed_at": log.sync_completed_at.isoformat() if log.sync_completed_at else None,
+            "sync_duration_seconds": duration_seconds,
+            "beacons_in_feed": log.beacons_in_feed,
+            "beacons_created": log.beacons_created,
+            "beacons_updated": log.beacons_updated,
+            "beacons_deactivated": log.beacons_deactivated,
+            "success": log.success,
+            "error_message": log.error_message,
+        })
+    
+    return {
+        "count": len(result),
+        "logs": result,
     }

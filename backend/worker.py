@@ -10,7 +10,7 @@ import httpx
 from sqlmodel import Session, select
 
 from config import get_settings
-from models import Beacon
+from models import Beacon, SyncLog
 from parser import parse_datex_v36, parse_datex_v10, ParsedBeacon
 
 logger = logging.getLogger(__name__)
@@ -110,7 +110,7 @@ async def fetch_and_parse_source(source: DataSource) -> list[ParsedBeacon]:
     return beacons
 
 
-def sync_beacons_to_db(session: Session, beacons: list[ParsedBeacon], source: DataSource):
+def sync_beacons_to_db(session: Session, beacons: list[ParsedBeacon], source: DataSource) -> dict:
     """Sync parsed beacons to database.
     
     Performs upsert for existing beacons and marks stale ones as inactive.
@@ -120,6 +120,9 @@ def sync_beacons_to_db(session: Session, beacons: list[ParsedBeacon], source: Da
         session: Database session.
         beacons: List of parsed beacons.
         source: The data source being synced.
+    
+    Returns:
+        Dict with sync metrics: created, updated, deactivated counts.
     """
     source_value = source.value
     now = datetime.utcnow()
@@ -193,6 +196,13 @@ def sync_beacons_to_db(session: Session, beacons: list[ParsedBeacon], source: Da
         f"[{source_value}] Synced: {created_count} created, "
         f"{updated_count} updated, {deactivated_count} deactivated"
     )
+    
+    return {
+        "in_feed": len(beacons),
+        "created": created_count,
+        "updated": updated_count,
+        "deactivated": deactivated_count,
+    }
 
 
 async def run_sync_task(engine):
@@ -215,11 +225,29 @@ async def run_sync_task(engine):
     # Process results
     with Session(engine) as session:
         for source, result in zip(DataSource, results):
+            sync_started = datetime.utcnow()
+            sync_log = SyncLog(
+                source=source.value,
+                sync_started_at=sync_started,
+            )
+            
             if isinstance(result, Exception):
                 logger.error(f"Error fetching {source.value}: {result}")
+                sync_log.success = False
+                sync_log.error_message = str(result)
+                sync_log.sync_completed_at = datetime.utcnow()
+                session.add(sync_log)
                 continue
             
             if result:
-                sync_beacons_to_db(session, result, source)
+                metrics = sync_beacons_to_db(session, result, source)
+                sync_log.beacons_in_feed = metrics["in_feed"]
+                sync_log.beacons_created = metrics["created"]
+                sync_log.beacons_updated = metrics["updated"]
+                sync_log.beacons_deactivated = metrics["deactivated"]
+                sync_log.sync_completed_at = datetime.utcnow()
+                session.add(sync_log)
+        
+        session.commit()
     
     logger.info("Sync task completed")
