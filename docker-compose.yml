@@ -1,0 +1,66 @@
+services:
+  db:
+    image: postgis/postgis:15-3.3
+    container_name: v16-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-v16user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-v16secret}
+      POSTGRES_DB: ${POSTGRES_DB:-v16db}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - v16-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-v16user} -d ${POSTGRES_DB:-v16db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: v16-backend
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-v16user}:${POSTGRES_PASSWORD:-v16secret}@db:5432/${POSTGRES_DB:-v16db}
+      DGT_NACIONAL_URL: https://nap.dgt.es/datex2/v3/dgt/SituationPublication/datex2_v36.xml
+      DGT_PAISVASCO_URL: https://infocar.dgt.es/datex2/dt-gv/SituationPublication/all/content.xml
+      DGT_CATALUNA_URL: https://infocar.dgt.es/datex2/sct/SituationPublication/all/content.xml
+      SYNC_INTERVAL_SECONDS: 60
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - v16-net
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: v16-frontend
+    networks:
+      - v16-net
+    restart: unless-stopped
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: v16-nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - v16-net
+    restart: unless-stopped
+
+networks:
+  v16-net:
+    driver: bridge
+
+volumes:
+  pgdata:

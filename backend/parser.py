@@ -1,0 +1,231 @@
+"""DATEX II XML Parser for DGT feeds.
+
+Supports both DATEX II v3.6 (Nacional) and v1.0 (País Vasco, Cataluña).
+"""
+from dataclasses import dataclass
+from typing import Optional
+from lxml import etree
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class ParsedBeacon:
+    """Parsed beacon data from DATEX II XML."""
+    external_id: str
+    lat: float
+    lng: float
+    incident_type: str
+    road_name: Optional[str] = None
+    severity: Optional[str] = None
+    municipality: Optional[str] = None
+    province: Optional[str] = None
+
+
+# Namespaces for DATEX II v3.6 (DGT Nacional)
+NS_V36 = {
+    "d2": "http://levelC/schema/3/d2Payload",
+    "sit": "http://levelC/schema/3/situation",
+    "loc": "http://levelC/schema/3/locationReferencing",
+    "com": "http://levelC/schema/3/common",
+    "lse": "http://levelC/schema/3/locationReferencingSpanishExtension",
+    "xsi": "http://www.w3.org/2001/XMLSchema-instance",
+}
+
+# Namespace for DATEX II v1.0 (País Vasco, Cataluña)
+NS_V10 = {
+    "d2": "http://datex2.eu/schema/1_0/1_0",
+    "xsi": "http://www.w3.org/2001/XMLSchema-instance",
+}
+
+
+def parse_datex_v36(xml_content: bytes) -> list[ParsedBeacon]:
+    """Parse DATEX II v3.6 XML (DGT Nacional).
+    
+    Args:
+        xml_content: Raw XML bytes from DGT Nacional feed.
+        
+    Returns:
+        List of parsed beacon objects.
+    """
+    beacons = []
+    
+    try:
+        root = etree.fromstring(xml_content)
+    except etree.XMLSyntaxError as e:
+        logger.error(f"Failed to parse v3.6 XML: {e}")
+        return beacons
+    
+    # Find all situation records
+    situations = root.findall(".//sit:situation", NS_V36)
+    
+    for situation in situations:
+        situation_id = situation.get("id", "")
+        severity = situation.findtext("sit:overallSeverity", namespaces=NS_V36)
+        
+        for record in situation.findall("sit:situationRecord", NS_V36):
+            record_id = record.get("id", situation_id)
+            
+            # Get cause type
+            cause_type = record.findtext(".//sit:causeType", namespaces=NS_V36)
+            if not cause_type:
+                continue
+            
+            # Get coordinates from location reference
+            # Try point location first (to), then from
+            lat, lng = None, None
+            road_name = None
+            municipality = None
+            province = None
+            
+            # Get road name
+            road_name = record.findtext(".//loc:roadName", namespaces=NS_V36)
+            
+            # Try to get coordinates from 'to' point
+            to_point = record.find(".//loc:to/loc:pointCoordinates", NS_V36)
+            if to_point is not None:
+                lat_text = to_point.findtext("loc:latitude", namespaces=NS_V36)
+                lng_text = to_point.findtext("loc:longitude", namespaces=NS_V36)
+                if lat_text and lng_text:
+                    lat = float(lat_text)
+                    lng = float(lng_text)
+            
+            # If no 'to' point, try 'from' point
+            if lat is None:
+                from_point = record.find(".//loc:from/loc:pointCoordinates", NS_V36)
+                if from_point is not None:
+                    lat_text = from_point.findtext("loc:latitude", namespaces=NS_V36)
+                    lng_text = from_point.findtext("loc:longitude", namespaces=NS_V36)
+                    if lat_text and lng_text:
+                        lat = float(lat_text)
+                        lng = float(lng_text)
+            
+            # Get Spanish extension data (municipality, province)
+            ext_point = record.find(".//loc:extendedTpegNonJunctionPoint", NS_V36)
+            if ext_point is not None:
+                municipality = ext_point.findtext("lse:municipality", namespaces=NS_V36)
+                province = ext_point.findtext("lse:province", namespaces=NS_V36)
+            
+            if lat is not None and lng is not None:
+                beacons.append(ParsedBeacon(
+                    external_id=record_id,
+                    lat=lat,
+                    lng=lng,
+                    incident_type=cause_type,
+                    road_name=road_name,
+                    severity=severity,
+                    municipality=municipality,
+                    province=province,
+                ))
+    
+    logger.info(f"Parsed {len(beacons)} beacons from v3.6 feed")
+    return beacons
+
+
+def parse_datex_v10(xml_content: bytes) -> list[ParsedBeacon]:
+    """Parse DATEX II v1.0 XML (País Vasco, Cataluña).
+    
+    Args:
+        xml_content: Raw XML bytes from regional feed.
+        
+    Returns:
+        List of parsed beacon objects.
+    """
+    beacons = []
+    
+    try:
+        root = etree.fromstring(xml_content)
+    except etree.XMLSyntaxError as e:
+        logger.error(f"Failed to parse v1.0 XML: {e}")
+        return beacons
+    
+    # The v1.0 format uses default namespace with _0: prefix in elements
+    # We need to find situations and records differently
+    
+    # Remove namespace prefixes for easier parsing
+    for elem in root.iter():
+        if elem.tag.startswith("{"):
+            elem.tag = elem.tag.split("}", 1)[1]
+        # Also handle attributes
+        for attr_name in list(elem.attrib.keys()):
+            if attr_name.startswith("{"):
+                new_name = attr_name.split("}", 1)[1]
+                elem.attrib[new_name] = elem.attrib.pop(attr_name)
+    
+    # Find all situations
+    situations = root.findall(".//situation")
+    
+    for situation in situations:
+        situation_id = situation.get("id", "")
+        
+        for record in situation.findall(".//situationRecord"):
+            record_id = record.get("id", situation_id)
+            
+            # Get record type from xsi:type
+            record_type = record.get("type", "")
+            
+            # Get coordinates
+            lat, lng = None, None
+            road_name = None
+            municipality = None
+            province = None
+            
+            # Find coordinates in tpeglinearLocation or point
+            to_point = record.find(".//to/pointCoordinates")
+            if to_point is not None:
+                lat_text = to_point.findtext("latitude")
+                lng_text = to_point.findtext("longitude")
+                if lat_text and lng_text:
+                    lat = float(lat_text)
+                    lng = float(lng_text)
+            
+            if lat is None:
+                from_point = record.find(".//from/pointCoordinates")
+                if from_point is not None:
+                    lat_text = from_point.findtext("latitude")
+                    lng_text = from_point.findtext("longitude")
+                    if lat_text and lng_text:
+                        lat = float(lat_text)
+                        lng = float(lng_text)
+            
+            # Get road name from descriptors
+            for name_elem in record.findall(".//name"):
+                desc_type = name_elem.findtext("tpegDescriptorType")
+                if desc_type == "linkName":
+                    road_name = name_elem.findtext("descriptor/value")
+                elif desc_type == "townName":
+                    municipality = name_elem.findtext("descriptor/value")
+                elif desc_type == "other":
+                    # Often contains province
+                    province = name_elem.findtext("descriptor/value")
+            
+            # Try to get from roadName element
+            if not road_name:
+                road_name = record.findtext(".//roadName/value")
+            if not road_name:
+                road_name = record.findtext(".//roadNumber")
+            
+            # Get administrative area as province fallback
+            if not province:
+                province = record.findtext(".//administrativeArea/value")
+            
+            # Determine incident type from record type or other fields
+            incident_type = record_type.replace("_0:", "").replace("Works", "roadMaintenance")
+            if not incident_type:
+                incident_type = "unknown"
+            
+            if lat is not None and lng is not None:
+                beacons.append(ParsedBeacon(
+                    external_id=record_id,
+                    lat=lat,
+                    lng=lng,
+                    incident_type=incident_type,
+                    road_name=road_name,
+                    severity=None,
+                    municipality=municipality,
+                    province=province,
+                ))
+    
+    logger.info(f"Parsed {len(beacons)} beacons from v1.0 feed")
+    return beacons
