@@ -35,6 +35,11 @@ class Beacon(BeaconBase, table=True):
         primary_key=True,
         description="Unique beacon ID"
     )
+    is_active: bool = Field(
+        default=True,
+        index=True,
+        description="Whether beacon is currently active in DGT feed"
+    )
     created_at: datetime = Field(
         default_factory=datetime.utcnow,
         description="Record creation timestamp"
@@ -42,6 +47,10 @@ class Beacon(BeaconBase, table=True):
     updated_at: datetime = Field(
         default_factory=datetime.utcnow,
         description="Last update timestamp"
+    )
+    deleted_at: Optional[datetime] = Field(
+        default=None,
+        description="When beacon was removed from DGT feed"
     )
     
     class Config:

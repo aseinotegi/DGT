@@ -113,7 +113,8 @@ async def fetch_and_parse_source(source: DataSource) -> list[ParsedBeacon]:
 def sync_beacons_to_db(session: Session, beacons: list[ParsedBeacon], source: DataSource):
     """Sync parsed beacons to database.
     
-    Performs upsert for existing beacons and deletes stale ones.
+    Performs upsert for existing beacons and marks stale ones as inactive.
+    Beacons are never deleted, only marked with deleted_at timestamp.
     
     Args:
         session: Database session.
@@ -126,8 +127,11 @@ def sync_beacons_to_db(session: Session, beacons: list[ParsedBeacon], source: Da
     # Get current external IDs from parsed data
     current_ids = {b.external_id for b in beacons}
     
-    # Get existing beacons for this source
-    existing_query = select(Beacon).where(Beacon.source == source_value)
+    # Get existing ACTIVE beacons for this source
+    existing_query = select(Beacon).where(
+        Beacon.source == source_value,
+        Beacon.is_active == True
+    )
     existing_beacons = session.exec(existing_query).all()
     existing_map = {b.external_id: b for b in existing_beacons}
     
@@ -175,17 +179,19 @@ def sync_beacons_to_db(session: Session, beacons: list[ParsedBeacon], source: Da
             session.add(beacon)
             created_count += 1
     
-    # Delete stale beacons (not in current feed)
-    deleted_count = 0
+    # Mark stale beacons as inactive (not in current feed)
+    deactivated_count = 0
     for existing in existing_beacons:
         if existing.external_id not in current_ids:
-            session.delete(existing)
-            deleted_count += 1
+            existing.is_active = False
+            existing.deleted_at = now
+            session.add(existing)
+            deactivated_count += 1
     
     session.commit()
     logger.info(
         f"[{source_value}] Synced: {created_count} created, "
-        f"{updated_count} updated, {deleted_count} deleted"
+        f"{updated_count} updated, {deactivated_count} deactivated"
     )
 
 

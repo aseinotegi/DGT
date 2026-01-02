@@ -132,13 +132,13 @@ async def health_check() -> dict[str, str]:
 
 @app.get("/api/v1/beacons")
 async def get_beacons(session: Session = Depends(get_session)) -> dict[str, Any]:
-    """Get all beacons as GeoJSON.
+    """Get all ACTIVE beacons as GeoJSON.
     
     Returns:
         GeoJSON FeatureCollection with all active beacons.
     """
-    # Query all beacons
-    beacons = session.exec(select(Beacon)).all()
+    # Query only active beacons
+    beacons = session.exec(select(Beacon).where(Beacon.is_active == True)).all()
     
     # Build GeoJSON FeatureCollection
     features = []
@@ -185,21 +185,74 @@ async def get_beacons(session: Session = Depends(get_session)) -> dict[str, Any]
 @app.get("/api/v1/beacons/stats")
 async def get_beacon_stats(session: Session = Depends(get_session)) -> dict[str, Any]:
     """Get beacon statistics per source and incident type."""
-    beacons = session.exec(select(Beacon)).all()
+    # Get all beacons (active and inactive)
+    all_beacons = session.exec(select(Beacon)).all()
+    active_beacons = [b for b in all_beacons if b.is_active]
+    inactive_beacons = [b for b in all_beacons if not b.is_active]
     
-    # Aggregate by source
+    # Aggregate active by source
     by_source = {}
     by_type = {}
     
-    for beacon in beacons:
-        # Count by source
+    for beacon in active_beacons:
         by_source[beacon.source] = by_source.get(beacon.source, 0) + 1
-        
-        # Count by incident type
         by_type[beacon.incident_type] = by_type.get(beacon.incident_type, 0) + 1
     
     return {
-        "total": len(beacons),
+        "active": len(active_beacons),
+        "historical": len(inactive_beacons),
+        "total": len(all_beacons),
         "by_source": by_source,
         "by_incident_type": by_type,
+    }
+
+
+@app.get("/api/v1/beacons/history")
+async def get_beacon_history(
+    session: Session = Depends(get_session),
+    limit: int = 100,
+    include_active: bool = False
+) -> dict[str, Any]:
+    """Get historical beacons (inactive ones).
+    
+    Args:
+        limit: Maximum number of records to return.
+        include_active: Whether to include currently active beacons.
+    
+    Returns:
+        List of beacons with their duration.
+    """
+    if include_active:
+        query = select(Beacon).order_by(Beacon.created_at.desc()).limit(limit)
+    else:
+        query = select(Beacon).where(Beacon.is_active == False).order_by(Beacon.deleted_at.desc()).limit(limit)
+    
+    beacons = session.exec(query).all()
+    
+    history = []
+    for beacon in beacons:
+        # Calculate duration if beacon is inactive
+        duration_seconds = None
+        if beacon.deleted_at and beacon.created_at:
+            duration_seconds = int((beacon.deleted_at - beacon.created_at).total_seconds())
+        
+        history.append({
+            "id": str(beacon.id),
+            "external_id": beacon.external_id,
+            "source": beacon.source,
+            "incident_type": beacon.incident_type,
+            "road_name": beacon.road_name,
+            "municipality": beacon.municipality,
+            "province": beacon.province,
+            "lat": beacon.lat,
+            "lng": beacon.lng,
+            "is_active": beacon.is_active,
+            "created_at": beacon.created_at.isoformat() if beacon.created_at else None,
+            "deleted_at": beacon.deleted_at.isoformat() if beacon.deleted_at else None,
+            "duration_seconds": duration_seconds,
+        })
+    
+    return {
+        "count": len(history),
+        "history": history,
     }
