@@ -141,6 +141,13 @@ async def health_check() -> dict[str, str]:
     return {"status": "ok"}
 
 
+# In-memory cache for beacons
+# Valid for 10 seconds to avoid constant DB hits/serialization
+_beacons_cache = {
+    "data": None,
+    "last_update": 0
+}
+
 @app.get("/api/v1/beacons")
 async def get_beacons(session: Session = Depends(get_session)) -> dict[str, Any]:
     """Get all ACTIVE beacons as GeoJSON.
@@ -148,7 +155,15 @@ async def get_beacons(session: Session = Depends(get_session)) -> dict[str, Any]
     Returns:
         GeoJSON FeatureCollection with all active beacons.
     """
+    import time
+    
+    # Check cache (15s TTL)
+    now = time.time()
+    if _beacons_cache["data"] and (now - _beacons_cache["last_update"] < 15):
+        return _beacons_cache["data"]
+
     # Query only active beacons
+
     beacons = session.exec(select(Beacon).where(Beacon.is_active == True)).all()
     
     # Build GeoJSON FeatureCollection
@@ -188,7 +203,7 @@ async def get_beacons(session: Session = Depends(get_session)) -> dict[str, Any]
         }
         features.append(feature)
     
-    return {
+    result = {
         "type": "FeatureCollection",
         "features": features,
         "metadata": {
@@ -200,6 +215,12 @@ async def get_beacons(session: Session = Depends(get_session)) -> dict[str, Any]
             }
         }
     }
+    
+    # Update cache
+    _beacons_cache["data"] = result
+    _beacons_cache["last_update"] = time.time()
+    
+    return result
 
 
 @app.get("/api/v1/beacons/stats")
