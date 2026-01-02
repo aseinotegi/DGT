@@ -158,6 +158,10 @@ async def get_beacons(session: Session = Depends(get_session)) -> dict[str, Any]
                 "severity": beacon.severity,
                 "municipality": beacon.municipality,
                 "province": beacon.province,
+                "direction": beacon.direction,
+                "pk": beacon.pk,
+                "autonomous_community": beacon.autonomous_community,
+                "activation_time": beacon.activation_time.isoformat() if beacon.activation_time else None,
                 "created_at": beacon.created_at.isoformat() if beacon.created_at else None,
                 "updated_at": beacon.updated_at.isoformat() if beacon.updated_at else None,
             }

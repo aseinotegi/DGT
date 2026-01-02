@@ -1,9 +1,10 @@
 """DATEX II XML Parser for DGT feeds.
 
-Supports both DATEX II v3.6 (Nacional) and v1.0 (País Vasco, Cataluña).
+Supports both DATEX II v3.6 (Nacional) and v1.0 (Pais Vasco, Cataluna).
 """
 from dataclasses import dataclass
 from typing import Optional
+from datetime import datetime
 from lxml import etree
 import logging
 
@@ -21,6 +22,10 @@ class ParsedBeacon:
     severity: Optional[str] = None
     municipality: Optional[str] = None
     province: Optional[str] = None
+    direction: Optional[str] = None
+    pk: Optional[str] = None
+    autonomous_community: Optional[str] = None
+    activation_time: Optional[datetime] = None
 
 
 # Namespaces for DATEX II v3.6 (DGT Nacional)
@@ -33,11 +38,36 @@ NS_V36 = {
     "xsi": "http://www.w3.org/2001/XMLSchema-instance",
 }
 
-# Namespace for DATEX II v1.0 (País Vasco, Cataluña)
+# Namespace for DATEX II v1.0 (Pais Vasco, Cataluna)
 NS_V10 = {
     "d2": "http://datex2.eu/schema/1_0/1_0",
     "xsi": "http://www.w3.org/2001/XMLSchema-instance",
 }
+
+# Direction translations
+DIRECTION_MAP = {
+    "bothWays": "Ambos sentidos",
+    "both": "Ambos sentidos",
+    "positive": "Creciente",
+    "negative": "Decreciente",
+    "creciente": "Creciente",
+    "decreciente": "Decreciente",
+}
+
+
+def parse_datetime(value: str) -> Optional[datetime]:
+    """Parse ISO datetime string."""
+    if not value:
+        return None
+    try:
+        # Handle timezone offset
+        if '+' in value:
+            value = value.split('+')[0]
+        if '.' in value:
+            return datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
+        return datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
+    except:
+        return None
 
 
 def parse_datex_v36(xml_content: bytes) -> list[ParsedBeacon]:
@@ -72,15 +102,25 @@ def parse_datex_v36(xml_content: bytes) -> list[ParsedBeacon]:
             if not cause_type:
                 continue
             
-            # Get coordinates from location reference
-            # Try point location first (to), then from
             lat, lng = None, None
             road_name = None
             municipality = None
             province = None
+            direction = None
+            pk = None
+            autonomous_community = None
+            activation_time = None
+            
+            # Get activation time
+            time_str = record.findtext(".//sit:situationRecordCreationTime", namespaces=NS_V36)
+            activation_time = parse_datetime(time_str)
             
             # Get road name
             road_name = record.findtext(".//loc:roadName", namespaces=NS_V36)
+            
+            # Get direction
+            dir_val = record.findtext(".//loc:tpegDirection", namespaces=NS_V36)
+            direction = DIRECTION_MAP.get(dir_val, dir_val)
             
             # Try to get coordinates from 'to' point
             to_point = record.find(".//loc:to/loc:pointCoordinates", NS_V36)
@@ -106,6 +146,10 @@ def parse_datex_v36(xml_content: bytes) -> list[ParsedBeacon]:
             if ext_point is not None:
                 municipality = ext_point.findtext("lse:municipality", namespaces=NS_V36)
                 province = ext_point.findtext("lse:province", namespaces=NS_V36)
+                autonomous_community = ext_point.findtext("lse:autonomousCommunity", namespaces=NS_V36)
+            
+            # Get PK from reference point
+            pk = record.findtext(".//loc:referencePointDistance", namespaces=NS_V36)
             
             if lat is not None and lng is not None:
                 beacons.append(ParsedBeacon(
@@ -117,6 +161,10 @@ def parse_datex_v36(xml_content: bytes) -> list[ParsedBeacon]:
                     severity=severity,
                     municipality=municipality,
                     province=province,
+                    direction=direction,
+                    pk=pk,
+                    autonomous_community=autonomous_community,
+                    activation_time=activation_time,
                 ))
     
     logger.info(f"Parsed {len(beacons)} beacons from v3.6 feed")
@@ -124,7 +172,7 @@ def parse_datex_v36(xml_content: bytes) -> list[ParsedBeacon]:
 
 
 def parse_datex_v10(xml_content: bytes) -> list[ParsedBeacon]:
-    """Parse DATEX II v1.0 XML (País Vasco, Cataluña).
+    """Parse DATEX II v1.0 XML (Pais Vasco, Cataluna).
     
     Args:
         xml_content: Raw XML bytes from regional feed.
@@ -140,14 +188,10 @@ def parse_datex_v10(xml_content: bytes) -> list[ParsedBeacon]:
         logger.error(f"Failed to parse v1.0 XML: {e}")
         return beacons
     
-    # The v1.0 format uses default namespace with _0: prefix in elements
-    # We need to find situations and records differently
-    
     # Remove namespace prefixes for easier parsing
     for elem in root.iter():
         if elem.tag.startswith("{"):
             elem.tag = elem.tag.split("}", 1)[1]
-        # Also handle attributes
         for attr_name in list(elem.attrib.keys()):
             if attr_name.startswith("{"):
                 new_name = attr_name.split("}", 1)[1]
@@ -165,11 +209,26 @@ def parse_datex_v10(xml_content: bytes) -> list[ParsedBeacon]:
             # Get record type from xsi:type
             record_type = record.get("type", "")
             
-            # Get coordinates
             lat, lng = None, None
             road_name = None
             municipality = None
             province = None
+            direction = None
+            pk = None
+            autonomous_community = None
+            activation_time = None
+            
+            # Get activation time
+            time_str = record.findtext(".//situationRecordCreationTime")
+            activation_time = parse_datetime(time_str)
+            
+            # Get direction
+            dir_val = record.findtext(".//tpegDirection")
+            if dir_val:
+                direction = DIRECTION_MAP.get(dir_val, dir_val)
+            dir_rel = record.findtext(".//directionRelative")
+            if dir_rel and not direction:
+                direction = DIRECTION_MAP.get(dir_rel, dir_rel)
             
             # Find coordinates in tpeglinearLocation or point
             to_point = record.find(".//to/pointCoordinates")
@@ -197,7 +256,6 @@ def parse_datex_v10(xml_content: bytes) -> list[ParsedBeacon]:
                 elif desc_type == "townName":
                     municipality = name_elem.findtext("descriptor/value")
                 elif desc_type == "other":
-                    # Often contains province
                     province = name_elem.findtext("descriptor/value")
             
             # Try to get from roadName element
@@ -206,9 +264,12 @@ def parse_datex_v10(xml_content: bytes) -> list[ParsedBeacon]:
             if not road_name:
                 road_name = record.findtext(".//roadNumber")
             
-            # Get administrative area as province fallback
+            # Get administrative area (province)
             if not province:
                 province = record.findtext(".//administrativeArea/value")
+            
+            # Get PK
+            pk = record.findtext(".//referencePointDistance")
             
             # Determine incident type from record type or other fields
             incident_type = record_type.replace("_0:", "").replace("Works", "roadMaintenance")
@@ -225,6 +286,10 @@ def parse_datex_v10(xml_content: bytes) -> list[ParsedBeacon]:
                     severity=None,
                     municipality=municipality,
                     province=province,
+                    direction=direction,
+                    pk=pk,
+                    autonomous_community=autonomous_community,
+                    activation_time=activation_time,
                 ))
     
     logger.info(f"Parsed {len(beacons)} beacons from v1.0 feed")

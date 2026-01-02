@@ -19,6 +19,11 @@ class BeaconBase(SQLModel):
     severity: Optional[str] = Field(default=None, description="Incident severity")
     municipality: Optional[str] = Field(default=None, description="Municipality name")
     province: Optional[str] = Field(default=None, description="Province name")
+    # New fields
+    direction: Optional[str] = Field(default=None, description="Direction: creciente, decreciente, both")
+    pk: Optional[str] = Field(default=None, description="Kilometric point (PK)")
+    autonomous_community: Optional[str] = Field(default=None, description="Autonomous community")
+    activation_time: Optional[datetime] = Field(default=None, description="When the beacon was activated")
 
 
 class Beacon(BeaconBase, table=True):
@@ -38,9 +43,6 @@ class Beacon(BeaconBase, table=True):
         default_factory=datetime.utcnow,
         description="Last update timestamp"
     )
-    
-    # PostGIS geometry column - defined separately due to GeoAlchemy2
-    # The geom column will be added via manual SQL during table creation
     
     class Config:
         arbitrary_types_allowed = True

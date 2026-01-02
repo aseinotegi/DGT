@@ -17,6 +17,10 @@ interface GeoJSONFeature {
         severity: string | null
         municipality: string | null
         province: string | null
+        direction: string | null
+        pk: string | null
+        autonomous_community: string | null
+        activation_time: string | null
         created_at: string | null
         updated_at: string | null
     }
@@ -75,22 +79,12 @@ function App() {
     return (
         <>
             <header className="header">
-                <div className="header-title">
-                    <img src="/baliza.jpg" alt="V16" className="header-icon" />
-                    <h1>Mapa Balizas V16 en Tiempo Real</h1>
-                </div>
+                <h1 className="header-title">Balizas V16</h1>
 
-                <div className="header-stats">
-                    <div className="stat-item">
-                        <span className="label">Balizas activas:</span>
-                        <span className="value">{data?.metadata.total_count ?? '-'}</span>
-                    </div>
-
+                <div className="header-info">
+                    <span className="beacon-count">{data?.metadata.total_count ?? '-'} activas</span>
                     {lastUpdate && (
-                        <>
-                            <div className="stat-divider"></div>
-                            <span className="stat-time">Actualizado: {formatTime(lastUpdate)}</span>
-                        </>
+                        <span className="update-time">Actualizado {formatTime(lastUpdate)}</span>
                     )}
                 </div>
             </header>
@@ -99,13 +93,12 @@ function App() {
                 {loading && !data && (
                     <div className="loading-overlay">
                         <div className="loading-spinner"></div>
-                        <span className="loading-text">Cargando balizas V16...</span>
+                        <span className="loading-text">Cargando...</span>
                     </div>
                 )}
 
                 {error && (
                     <div className="error-banner">
-                        <span>⚠️</span>
                         <span>{error}</span>
                     </div>
                 )}
