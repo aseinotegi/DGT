@@ -37,36 +37,42 @@ scheduler = AsyncIOScheduler()
 
 
 def init_db():
-    """Initialize database tables and PostGIS extension."""
+    """Initialize database tables. PostGIS is optional."""
     # Create tables
     SQLModel.metadata.create_all(engine)
     
-    # Add PostGIS extension and geom column if not exists
+    # Try to add PostGIS extension (optional - not available on Railway)
     with Session(engine) as session:
-        # Enable PostGIS
-        session.exec(text("CREATE EXTENSION IF NOT EXISTS postgis"))
-        session.commit()
-        
-        # Check if geom column exists
-        result = session.exec(text("""
-            SELECT column_name FROM information_schema.columns 
-            WHERE table_name = 'beacons' AND column_name = 'geom'
-        """))
-        if not result.first():
-            # Add geometry column
+        try:
+            # Enable PostGIS
+            session.exec(text("CREATE EXTENSION IF NOT EXISTS postgis"))
+            session.commit()
+            
+            # Check if geom column exists
+            result = session.exec(text("""
+                SELECT column_name FROM information_schema.columns 
+                WHERE table_name = 'beacons' AND column_name = 'geom'
+            """))
+            if not result.first():
+                # Add geometry column
+                session.exec(text("""
+                    ALTER TABLE beacons 
+                    ADD COLUMN IF NOT EXISTS geom geometry(Point, 4326)
+                """))
+                session.commit()
+                logger.info("Added geom column to beacons table")
+            
+            # Create spatial index
             session.exec(text("""
-                ALTER TABLE beacons 
-                ADD COLUMN IF NOT EXISTS geom geometry(Point, 4326)
+                CREATE INDEX IF NOT EXISTS idx_beacons_geom 
+                ON beacons USING GIST (geom)
             """))
             session.commit()
-            logger.info("Added geom column to beacons table")
-        
-        # Create spatial index
-        session.exec(text("""
-            CREATE INDEX IF NOT EXISTS idx_beacons_geom 
-            ON beacons USING GIST (geom)
-        """))
-        session.commit()
+            logger.info("PostGIS enabled")
+        except Exception as e:
+            logger.warning(f"PostGIS not available (running without spatial features): {e}")
+            session.rollback()
+
 
 
 def get_session():
