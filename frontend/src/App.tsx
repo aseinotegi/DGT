@@ -47,7 +47,8 @@ function App() {
 
     const fetchBeacons = useCallback(async () => {
         try {
-            const response = await fetch('/api/v1/beacons')
+            const apiUrl = import.meta.env.VITE_API_URL || ''
+            const response = await fetch(`${apiUrl}/api/v1/beacons`)
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}`)
             }
