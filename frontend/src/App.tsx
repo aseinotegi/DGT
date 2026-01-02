@@ -63,6 +63,9 @@ interface AlertsResponse {
     alerts: VulnerableAlert[]
 }
 
+// API base URL - empty for local (uses proxy), full URL for production
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 function App() {
     const [data, setData] = useState<GeoJSONData | null>(null)
     const [loading, setLoading] = useState(true)
@@ -75,7 +78,7 @@ function App() {
 
     const fetchBeacons = useCallback(async () => {
         try {
-            const response = await fetch('/api/v1/beacons')
+            const response = await fetch(`${API_BASE}/api/v1/beacons`)
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}`)
             }
@@ -93,7 +96,7 @@ function App() {
 
     const fetchAlerts = useCallback(async () => {
         try {
-            const response = await fetch('/api/v1/alerts/vulnerable?min_score=50')
+            const response = await fetch(`${API_BASE}/api/v1/alerts/vulnerable?min_score=50`)
             if (!response.ok) return
             const json: AlertsResponse = await response.json()
             setAlerts(json.alerts)
