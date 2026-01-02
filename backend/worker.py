@@ -100,7 +100,9 @@ async def fetch_and_parse_source(source: DataSource) -> list[ParsedBeacon]:
         return []
     
     parser = config["parser"]
-    beacons = parser(xml_content)
+    
+    # Run CPU-bound parsing in a separate thread to avoid blocking the event loop
+    beacons = await asyncio.to_thread(parser, xml_content)
     
     # Add source to each beacon
     for beacon in beacons:

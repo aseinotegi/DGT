@@ -9,6 +9,7 @@ from typing import Any
 
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from sqlmodel import Session, SQLModel, create_engine, select, text
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
@@ -129,6 +130,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Gzip compression
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
 @app.get("/api/health")
