@@ -9,15 +9,12 @@ RUN npm install
 COPY . .
 RUN npm run build
 
-# Production stage - use serve for Railway
-FROM node:20-alpine
+# Production stage
+FROM nginx:1.25-alpine
 
-WORKDIR /app
+COPY --from=builder /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-RUN npm install -g serve
+EXPOSE 80
 
-COPY --from=builder /app/dist ./dist
-
-EXPOSE 3000
-
-CMD ["serve", "-s", "dist", "-l", "3000"]
+CMD ["nginx", "-g", "daemon off;"]
