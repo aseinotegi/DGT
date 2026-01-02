@@ -16,6 +16,7 @@ class BeaconBase(SQLModel):
     lng: float = Field(description="Longitude")
     incident_type: str = Field(description="Type of incident (causeType)")
     road_name: Optional[str] = Field(default=None, description="Road identifier")
+    road_type: Optional[str] = Field(default=None, index=True, description="Road type: autopista, nacional, autonomica, provincial, local")
     severity: Optional[str] = Field(default=None, description="Incident severity")
     municipality: Optional[str] = Field(default=None, description="Municipality name")
     province: Optional[str] = Field(default=None, description="Province name")

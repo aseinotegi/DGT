@@ -78,6 +78,50 @@ def parse_datetime(value: str) -> Optional[datetime]:
         return None
 
 
+import re
+
+# Road classification patterns
+ROAD_PATTERNS = [
+    # Autopistas y autovias (A-1, AP-7, etc)
+    (re.compile(r'^A[P]?-?\d', re.IGNORECASE), 'autopista'),
+    # Nacionales (N-I, N-340, etc)
+    (re.compile(r'^N-?\d', re.IGNORECASE), 'nacional'),
+    # Autonomicas - prefijos de 2 letras (CA-1, BI-20, GI-11, etc)
+    (re.compile(r'^[A-Z]{2}-?\d', re.IGNORECASE), 'autonomica'),
+    # Provinciales y comarcales (C-12, L-501, etc) - 1 letra
+    (re.compile(r'^[A-Z]-?\d', re.IGNORECASE), 'provincial'),
+]
+
+
+def classify_road_type(road_name: Optional[str]) -> Optional[str]:
+    """Classify road type based on name prefix.
+    
+    Spanish road classification:
+    - autopista: A-X, AP-X (autopistas, autovias de peaje)
+    - nacional: N-X (carreteras nacionales)
+    - autonomica: XX-X (carreteras autonomicas, 2 letras)
+    - provincial: X-X (provinciales/comarcales, 1 letra)
+    - local: anything else
+    
+    Returns:
+        Road type string or None if can't classify.
+    """
+    if not road_name:
+        return None
+    
+    road_name = road_name.strip().upper()
+    
+    for pattern, road_type in ROAD_PATTERNS:
+        if pattern.match(road_name):
+            return road_type
+    
+    # If has letters and numbers but didn't match, probably local
+    if road_name and any(c.isalpha() for c in road_name):
+        return 'local'
+    
+    return None
+
+
 def parse_datex_v36(xml_content: bytes) -> list[ParsedBeacon]:
     """Parse DATEX II v3.6 XML (DGT Nacional).
     

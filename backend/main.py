@@ -155,6 +155,7 @@ async def get_beacons(session: Session = Depends(get_session)) -> dict[str, Any]
                 "source": beacon.source,
                 "incident_type": beacon.incident_type,
                 "road_name": beacon.road_name,
+                "road_type": beacon.road_type,
                 "severity": beacon.severity,
                 "municipality": beacon.municipality,
                 "province": beacon.province,
@@ -193,10 +194,13 @@ async def get_beacon_stats(session: Session = Depends(get_session)) -> dict[str,
     # Aggregate active by source
     by_source = {}
     by_type = {}
+    by_road_type = {}
     
     for beacon in active_beacons:
         by_source[beacon.source] = by_source.get(beacon.source, 0) + 1
         by_type[beacon.incident_type] = by_type.get(beacon.incident_type, 0) + 1
+        if beacon.road_type:
+            by_road_type[beacon.road_type] = by_road_type.get(beacon.road_type, 0) + 1
     
     return {
         "active": len(active_beacons),
@@ -204,6 +208,7 @@ async def get_beacon_stats(session: Session = Depends(get_session)) -> dict[str,
         "total": len(all_beacons),
         "by_source": by_source,
         "by_incident_type": by_type,
+        "by_road_type": by_road_type,
     }
 
 

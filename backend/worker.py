@@ -11,7 +11,7 @@ from sqlmodel import Session, select
 
 from config import get_settings
 from models import Beacon, SyncLog
-from parser import parse_datex_v36, parse_datex_v10, ParsedBeacon
+from parser import parse_datex_v36, parse_datex_v10, ParsedBeacon, classify_road_type
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -150,6 +150,7 @@ def sync_beacons_to_db(session: Session, beacons: list[ParsedBeacon], source: Da
             beacon.lng = parsed.lng
             beacon.incident_type = parsed.incident_type
             beacon.road_name = parsed.road_name
+            beacon.road_type = classify_road_type(parsed.road_name)
             beacon.severity = parsed.severity
             beacon.municipality = parsed.municipality
             beacon.province = parsed.province
@@ -169,6 +170,7 @@ def sync_beacons_to_db(session: Session, beacons: list[ParsedBeacon], source: Da
                 lng=parsed.lng,
                 incident_type=parsed.incident_type,
                 road_name=parsed.road_name,
+                road_type=classify_road_type(parsed.road_name),
                 severity=parsed.severity,
                 municipality=parsed.municipality,
                 province=parsed.province,

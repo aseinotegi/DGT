@@ -71,6 +71,48 @@ body {
   font-size: 12px;
 }
 
+/* Filter Bar */
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  padding: 10px 20px;
+  background: #f8f9fa;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.filter-select {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: white;
+  font-size: 14px;
+  color: var(--text-primary);
+  cursor: pointer;
+  min-width: 150px;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.filter-clear {
+  padding: 8px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: white;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.filter-clear:hover {
+  background: #fff0f0;
+}
+
 /* Map */
 .map-container {
   flex: 1;
