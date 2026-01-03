@@ -697,3 +697,96 @@ async def debug_beacon_types(session: Session = Depends(get_session)) -> dict[st
         "source_identification_values": dict(sorted(source_ids.items(), key=lambda x: -x[1])),
     }
 
+
+@app.get("/api/v1/stats/trends")
+async def get_stats_trends(
+    days: int = 7,
+    session: Session = Depends(get_session)
+) -> dict[str, Any]:
+    """Get historical trend data for charts.
+
+    Returns:
+    - hourly_distribution: Incidents by hour of day (0-23) for active V16 beacons
+    - daily_trend: Incidents per day for the last N days
+    - by_source: Distribution by data source
+    """
+    from datetime import datetime, timezone, timedelta
+    from collections import defaultdict
+
+    now = datetime.now(timezone.utc)
+    days_ago = now - timedelta(days=days)
+
+    # Get all V16 beacons (active and recently inactive)
+    all_beacons = session.exec(
+        select(Beacon).where(Beacon.created_at >= days_ago)
+    ).all()
+
+    v16_beacons = [b for b in all_beacons if is_v16_beacon(b)]
+
+    # 1. Hourly distribution (using activation_time of active beacons only)
+    active_v16 = [b for b in v16_beacons if b.is_active]
+    hourly: dict[int, int] = defaultdict(int)
+
+    for beacon in active_v16:
+        if beacon.activation_time:
+            # Use local Spain time (UTC+1 or UTC+2)
+            act_time = beacon.activation_time
+            if act_time.tzinfo is None:
+                act_time = act_time.replace(tzinfo=timezone.utc)
+            # Approximate Spain timezone (UTC+1)
+            spain_hour = (act_time.hour + 1) % 24
+            hourly[spain_hour] += 1
+
+    # Fill all 24 hours
+    hourly_distribution = [{"hour": h, "count": hourly.get(h, 0)} for h in range(24)]
+
+    # 2. Daily trend (using created_at)
+    daily: dict[str, int] = defaultdict(int)
+
+    for beacon in v16_beacons:
+        if beacon.created_at:
+            day_str = beacon.created_at.strftime("%Y-%m-%d")
+            daily[day_str] += 1
+
+    # Generate all days in range
+    daily_trend = []
+    for i in range(days, -1, -1):
+        day = now - timedelta(days=i)
+        day_str = day.strftime("%Y-%m-%d")
+        daily_trend.append({
+            "date": day_str,
+            "label": day.strftime("%d/%m"),
+            "count": daily.get(day_str, 0)
+        })
+
+    # 3. By source distribution
+    by_source: dict[str, int] = defaultdict(int)
+    for beacon in active_v16:
+        by_source[beacon.source] += 1
+
+    # 4. Calculate trend percentage (today vs yesterday)
+    today_str = now.strftime("%Y-%m-%d")
+    yesterday_str = (now - timedelta(days=1)).strftime("%Y-%m-%d")
+    today_count = daily.get(today_str, 0)
+    yesterday_count = daily.get(yesterday_str, 0)
+
+    if yesterday_count > 0:
+        trend_pct = round(((today_count - yesterday_count) / yesterday_count) * 100)
+    else:
+        trend_pct = 0 if today_count == 0 else 100
+
+    return {
+        "period_days": days,
+        "total_v16_in_period": len(v16_beacons),
+        "active_now": len(active_v16),
+        "hourly_distribution": hourly_distribution,
+        "daily_trend": daily_trend,
+        "by_source": dict(by_source),
+        "trend_vs_yesterday": {
+            "today": today_count,
+            "yesterday": yesterday_count,
+            "percentage": trend_pct,
+            "direction": "up" if trend_pct > 0 else ("down" if trend_pct < 0 else "stable")
+        }
+    }
+

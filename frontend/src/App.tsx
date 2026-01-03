@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import BeaconMap from './components/BeaconMap'
-import { StatsPanel } from './components/StatsPanel'
 import './index.css'
 
 interface GeoJSONFeature {
@@ -84,7 +83,6 @@ function App() {
     const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
     const [alerts, setAlerts] = useState<VulnerableAlert[]>([])
     const [showAlertPanel, setShowAlertPanel] = useState(false)
-    const [showStats, setShowStats] = useState(false)
 
     const [filterV16Only] = useState<boolean>(true)
 
@@ -224,15 +222,15 @@ function App() {
 
                 <BeaconMap data={filteredData} />
 
-                {/* Floating Alert Button - color changes based on risk level */}
+                {/* Floating Action Buttons */}
                 <div className="fab-container">
-                    <button
+                    <Link
+                        to="/stats"
                         className="alert-fab stats-fab"
-                        onClick={() => setShowStats(true)}
                         title="Ver estadísticas"
                     >
                         <span className="stats-fab-icon">📊</span>
-                    </button>
+                    </Link>
 
                     <Link
                         to="/peligro"
@@ -245,8 +243,6 @@ function App() {
                         )}
                     </Link>
                 </div>
-
-                <StatsPanel isOpen={showStats} onClose={() => setShowStats(false)} />
             </main>
         </div>
     )
