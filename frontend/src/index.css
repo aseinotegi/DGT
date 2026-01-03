@@ -794,12 +794,14 @@ header h1 {
 }
 
 .peligro-header {
-  background: #c0392b;
+  background: #34495e;
   color: white;
-  padding: 16px 20px;
+  padding: 0 16px;
+  height: 48px;
   display: flex;
   align-items: center;
   gap: 24px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
 .back-button {
@@ -813,7 +815,7 @@ header h1 {
 }
 
 .peligro-header h1 {
-  font-size: 1.2rem;
+  font-size: 1rem;
   font-weight: 600;
 }
 
@@ -837,8 +839,8 @@ header h1 {
 .no-alerts {
   text-align: center;
   padding: 60px 20px;
-  font-size: 1.2rem;
-  color: #27ae60;
+  font-size: 1rem;
+  color: #666;
 }
 
 /* Peligro Detail Card */
@@ -850,9 +852,9 @@ header h1 {
 
 .peligro-card {
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  padding: 20px;
 }
 
 .peligro-card-header {

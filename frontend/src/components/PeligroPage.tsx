@@ -75,7 +75,7 @@ function PeligroPage() {
         <div className="peligro-page">
             <header className="peligro-header">
                 <Link to="/" className="back-button">← Volver al mapa</Link>
-                <h1>⚠️ Personas en situación de riesgo</h1>
+                <h1>Personas en situación de riesgo</h1>
             </header>
 
             {beaconId && alert ? (
@@ -143,7 +143,7 @@ function PeligroPage() {
                                 rel="noopener noreferrer"
                                 className="maps-button"
                             >
-                                📍 Abrir en Google Maps
+                                Abrir en Google Maps
                             </a>
                         </div>
                     </div>
@@ -157,7 +157,7 @@ function PeligroPage() {
 
                     {allAlerts.length === 0 ? (
                         <div className="no-alerts">
-                            ✅ No hay alertas de vulnerabilidad en este momento
+                            No hay alertas de vulnerabilidad en este momento
                         </div>
                     ) : (
                         <div className="alerts-grid">
