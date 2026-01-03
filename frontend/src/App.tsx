@@ -236,7 +236,6 @@ function App() {
                 >
                     <span className="alert-fab-count">{validAlerts.length}</span>
                     <img src="/icons/personas_vulnerables.png" alt="Personas vulnerables" className="alert-fab-icon" />
-                    <span className="alert-fab-label">Personas vulnerables</span>
                 </Link>
             </main>
         </div>
