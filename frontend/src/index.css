@@ -1120,3 +1120,330 @@ header h1 {
   justify-content: center;
   border: 2px solid white;
 }
+
+/* ========================================
+   RESPONSIVE STYLES - Mobile & Tablet
+   ======================================== */
+
+/* Tablet (max-width: 768px) */
+@media (max-width: 768px) {
+  header {
+    padding: 0 12px;
+    height: 44px;
+  }
+
+  header h1 {
+    font-size: 0.9rem;
+  }
+
+  .v16-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .stats .count {
+    font-size: 0.8rem;
+  }
+
+  .stats .last-update {
+    font-size: 0.65rem;
+  }
+
+  /* Alert Panel */
+  .alert-simple {
+    width: calc(100vw - 40px);
+    max-width: 320px;
+    bottom: 80px;
+    right: 20px;
+  }
+
+  /* FAB Button */
+  .alert-fab {
+    width: 50px;
+    height: 50px;
+    bottom: 16px;
+    right: 16px;
+  }
+
+  .alert-fab-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  /* Peligro Page */
+  .peligro-header {
+    padding: 0 12px;
+    gap: 16px;
+  }
+
+  .peligro-header h1 {
+    font-size: 0.9rem;
+  }
+
+  .peligro-card {
+    padding: 16px;
+  }
+
+  .alerts-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .score-bar {
+    grid-template-columns: 80px 1fr 35px;
+    gap: 8px;
+  }
+
+  .score-bar span:first-child {
+    font-size: 11px;
+  }
+
+  /* Popup */
+  .leaflet-popup-content {
+    min-width: 200px !important;
+    max-width: 280px !important;
+  }
+
+  .pm-body p {
+    font-size: 12px;
+  }
+
+  .pm-actions button {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+}
+
+/* Mobile (max-width: 480px) */
+@media (max-width: 480px) {
+  header {
+    padding: 0 10px;
+    height: 40px;
+  }
+
+  header h1 {
+    font-size: 0.8rem;
+  }
+
+  .header-left {
+    gap: 8px;
+  }
+
+  .v16-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .stats {
+    gap: 1px;
+  }
+
+  .stats .count {
+    font-size: 0.75rem;
+  }
+
+  /* Alert Panel - Full width on mobile */
+  .alert-simple {
+    width: calc(100vw - 24px);
+    left: 12px;
+    right: 12px;
+    bottom: 70px;
+  }
+
+  .alert-simple-header {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .alert-simple-list li {
+    padding: 10px 12px;
+  }
+
+  .score-badge {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+  }
+
+  /* FAB Button */
+  .alert-fab {
+    width: 46px;
+    height: 46px;
+    bottom: 12px;
+    right: 12px;
+  }
+
+  .alert-fab-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .alert-fab-count {
+    width: 18px;
+    height: 18px;
+    font-size: 9px;
+    top: -2px;
+    right: -2px;
+  }
+
+  /* Peligro Page */
+  .peligro-header {
+    height: 40px;
+    gap: 12px;
+  }
+
+  .back-button {
+    font-size: 12px;
+  }
+
+  .peligro-header h1 {
+    font-size: 0.85rem;
+  }
+
+  .peligro-intro {
+    padding: 16px;
+    font-size: 13px;
+  }
+
+  .peligro-detail {
+    padding: 12px;
+  }
+
+  .peligro-card {
+    padding: 14px;
+    border-radius: 6px;
+  }
+
+  .peligro-card h2 {
+    font-size: 1.1rem;
+  }
+
+  .score-display {
+    font-size: 20px;
+  }
+
+  .risk-badge {
+    padding: 4px 10px;
+    font-size: 11px;
+  }
+
+  .time-active {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  .score-breakdown h3,
+  .risk-factors h3 {
+    font-size: 13px;
+  }
+
+  .score-bar {
+    grid-template-columns: 70px 1fr 30px;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .score-bar span {
+    font-size: 10px !important;
+  }
+
+  .score-bar .bar {
+    height: 6px;
+  }
+
+  .risk-factors li {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .maps-button {
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  .alert-card {
+    padding: 12px;
+  }
+
+  .alert-card-header {
+    gap: 8px;
+  }
+
+  .risk-badge-small {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+  }
+
+  .alert-road {
+    font-size: 13px;
+  }
+
+  .alert-card-body {
+    font-size: 12px;
+  }
+
+  /* Popup adjustments */
+  .leaflet-popup-content {
+    min-width: 180px !important;
+    max-width: 250px !important;
+    margin: 8px !important;
+  }
+
+  .pm-header {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .pm-header img {
+    width: 20px;
+    height: 20px;
+  }
+
+  .pm-header span {
+    font-size: 12px;
+  }
+
+  .pm-body {
+    padding: 10px;
+  }
+
+  .pm-body p {
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+
+  .pm-actions {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .pm-actions button {
+    padding: 5px 8px;
+    font-size: 10px;
+  }
+
+  .stale-badge {
+    font-size: 8px;
+    padding: 1px 4px;
+  }
+}
+
+/* Landscape mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+  header {
+    height: 36px;
+  }
+
+  .alert-fab {
+    width: 40px;
+    height: 40px;
+    bottom: 8px;
+    right: 8px;
+  }
+
+  .alert-fab-icon {
+    width: 22px;
+    height: 22px;
+  }
+}
