@@ -1205,12 +1205,14 @@ header h1 {
 /* Alert Floating Action Button */
 .fab-container {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
+  top: 50%;
+  left: 20px;
+  transform: translateY(-50%);
   display: flex;
-  gap: 12px;
-  align-items: flex-end;
+  flex-direction: column;
+  gap: 16px;
   z-index: 1500;
+  align-items: center;
 }
 
 /* Shared FAB Styles */
@@ -1318,8 +1320,11 @@ header h1 {
 /* Tablet (max-width: 768px) */
 @media (max-width: 768px) {
   .fab-container {
-    bottom: 16px;
-    right: 16px;
+    left: 10px;
+    gap: 12px;
+    /* Maintain centered left position */
+    bottom: auto;
+    right: auto;
   }
 
   header {
