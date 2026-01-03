@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import './StatsPanel.css'
 
-// Using environment variable locally
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+// API base URL - empty for local (uses proxy), full URL for production
+const API_BASE = import.meta.env.VITE_API_URL || 'https://dgt-production.up.railway.app'
 
 interface ProvinceStat {
     name: string
