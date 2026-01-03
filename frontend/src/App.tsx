@@ -222,17 +222,17 @@ function App() {
 
                 <BeaconMap data={filteredData} />
 
-                {/* Floating Alert Button */}
-                {criticalAlerts.length > 0 && (
-                    <button
-                        className="alert-fab"
-                        onClick={() => setShowAlertPanel(!showAlertPanel)}
-                        title="Personas vulnerables detectadas"
-                    >
-                        <span className="alert-fab-icon">⚠</span>
+                {/* Floating Alert Button - always visible */}
+                <Link
+                    to="/peligro"
+                    className="alert-fab"
+                    title="Ver personas vulnerables"
+                >
+                    <span className="alert-fab-icon">⚠</span>
+                    {criticalAlerts.length > 0 && (
                         <span className="alert-fab-count">{criticalAlerts.length}</span>
-                    </button>
-                )}
+                    )}
+                </Link>
             </main>
         </div>
     )
