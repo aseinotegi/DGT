@@ -165,12 +165,6 @@ function App() {
                     <span className="count">
                         {filteredCount} balizas activas
                     </span>
-                    {validAlerts.length > 0 && (
-                        <Link to="/peligro" className="vulnerable-counter">
-                            <span className="vulnerable-icon">⚠</span>
-                            <span>{validAlerts.length} en riesgo</span>
-                        </Link>
-                    )}
                     {lastUpdate && (
                         <span className="last-update">
                             {lastUpdate.toLocaleTimeString()}
