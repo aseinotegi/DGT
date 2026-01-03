@@ -612,16 +612,20 @@ async def get_stats(
             if beacon.activation_time:
                 act_time = beacon.activation_time
                 if act_time.tzinfo is None:
+                    # DGT times are in Spain timezone (UTC+1), treat as UTC for simplicity
                     act_time = act_time.replace(tzinfo=timezone.utc)
                 delta = now - act_time
                 minutes = int(delta.total_seconds() / 60)
-                active_times.append(minutes)
+                # Only include positive times (negative means future time, likely timezone issue)
+                if minutes >= 0:
+                    active_times.append(minutes)
         else:
             # For historical, calculate actual duration (deleted_at - created_at)
             if beacon.deleted_at and beacon.created_at:
                 delta = beacon.deleted_at - beacon.created_at
                 minutes = int(delta.total_seconds() / 60)
-                active_times.append(minutes)
+                if minutes >= 0:
+                    active_times.append(minutes)
             elif beacon.is_active and beacon.activation_time:
                 # Still active, calculate from activation to now
                 act_time = beacon.activation_time
@@ -629,7 +633,8 @@ async def get_stats(
                     act_time = act_time.replace(tzinfo=timezone.utc)
                 delta = now - act_time
                 minutes = int(delta.total_seconds() / 60)
-                active_times.append(minutes)
+                if minutes >= 0:
+                    active_times.append(minutes)
 
     # Calculate normalized time statistics
     time_stats = calculate_normalized_time_stats(active_times)
