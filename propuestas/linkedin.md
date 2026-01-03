@@ -1,8 +1,10 @@
 🚨 Cuando los datos públicos revelan más de lo que deberían
 
-Hace poco descubrí el fantástico trabajo de Héctor Julián Alijas con su mapa de balizas V16. Me pareció brillante: una visualización en tiempo real de vehículos detenidos en las carreteras españolas. Enhorabuena, Héctor, por la iniciativa y la ejecución técnica.
+Hace poco descubrí el fantástico trabajo de Héctor Julián Alijas con su mapa de balizas V16. Me pareció brillante: una visualización en tiempo real de vehículos detenidos en las carreteras españolas.
 
-Como ejercicio de investigación, desarrollé un sistema de detección de personas potencialmente vulnerables. El algoritmo analiza cada baliza activa considerando:
+Quiero dejar claro que no pretendo pisar el trabajo de Héctor. Él ha hecho un trabajo excelente con el tratamiento y visualización de los datos de la DGT. Yo simplemente me inspiré en su iniciativa y quise explorar una dimensión diferente: la detección de vulnerabilidades.
+
+Como ejercicio de investigación, desarrollé un sistema que analiza cada baliza activa considerando:
 
 - Distancia a núcleos urbanos (aislamiento)
 - Tiempo que lleva encendida (exposición)  
@@ -15,7 +17,9 @@ Pude identificar automáticamente conductores solos, de noche, en carreteras sec
 
 Los datos de la DGT son públicos, sin autenticación, sin rate-limit, actualizados cada minuto. Cualquiera puede obtener la ubicación exacta de personas en situación de vulnerabilidad en tiempo real.
 
-Esto no es una crítica al sistema de balizas V16, que salva vidas. Es una llamada de atención sobre cómo equilibrar transparencia y seguridad. Quizá un delay de 15 minutos, coordenadas aproximadas o algún tipo de control de acceso podrían mitigar estos riesgos sin perder utilidad.
+Este tipo de iniciativas de datos abiertos son fantásticas, pero sin un control óptimo pueden ponernos en peligro. No es una crítica, es una reflexión sobre cómo equilibrar transparencia y seguridad ciudadana.
+
+Puedes verlo aquí: https://mapabalizasv16.info/
 
 Gracias de nuevo a Héctor por el proyecto original que me hizo reflexionar sobre todo esto.
 
