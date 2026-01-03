@@ -111,6 +111,17 @@ async def lifespan(app: FastAPI):
         id="sync_dgt_data",
         replace_existing=True,
     )
+    
+    # Schedule isolation score prefetch (every 5 minutes)
+    scheduler.add_job(
+        prefetch_beacon_isolation_scores,
+        "interval",
+        seconds=300,  # 5 minutes
+        args=[engine],
+        id="prefetch_isolation",
+        replace_existing=True,
+    )
+    
     scheduler.start()
     logger.info(f"Scheduler started (interval: {settings.sync_interval_seconds}s)")
     
@@ -122,6 +133,35 @@ async def lifespan(app: FastAPI):
     # Shutdown
     scheduler.shutdown()
     logger.info("Scheduler stopped")
+
+
+async def prefetch_beacon_isolation_scores(engine):
+    """Pre-fetch isolation scores for V16 beacons using Overpass API."""
+    from geospatial import prefetch_isolation_scores
+    
+    try:
+        with Session(engine) as session:
+            # Get active V16 beacons
+            beacons = session.exec(
+                select(Beacon).where(
+                    Beacon.is_active == True,
+                    Beacon.incident_type == 'vehicleObstruction'
+                )
+            ).all()
+            
+            if not beacons:
+                return
+            
+            # Get coordinates
+            coords = [(b.lat, b.lng) for b in beacons]
+            logger.info(f"Pre-fetching isolation scores for {len(coords)} beacons...")
+            
+            # Prefetch (with rate limiting built in)
+            await prefetch_isolation_scores(coords)
+            
+            logger.info("Isolation score prefetch complete")
+    except Exception as e:
+        logger.error(f"Error pre-fetching isolation scores: {e}")
 
 
 # FastAPI application
