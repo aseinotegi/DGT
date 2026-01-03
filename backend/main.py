@@ -500,83 +500,159 @@ async def get_vulnerable_beacons(
     }
 
 
+def calculate_normalized_time_stats(active_times: list[int]) -> dict[str, Any]:
+    """Calculate normalized time statistics excluding outliers.
+
+    Uses IQR (Interquartile Range) method to detect and exclude outliers:
+    - Values below Q1 - 1.5*IQR are excluded (likely test activations)
+    - Values above Q3 + 1.5*IQR are excluded (likely system errors)
+    - Also excludes times < 2 min (definitely tests) and > 600 min (10h, likely errors)
+
+    Returns dict with avg, median, valid_count, excluded_count, and range info.
+    """
+    import statistics
+
+    if not active_times:
+        return {
+            "avg_minutes": 0,
+            "median_minutes": 0,
+            "valid_count": 0,
+            "excluded_count": 0,
+            "min_minutes": 0,
+            "max_minutes": 0,
+        }
+
+    # Step 1: Apply hard limits first (2 min to 10 hours)
+    MIN_VALID_MINUTES = 2      # Less than 2 min = likely a test
+    MAX_VALID_MINUTES = 600    # More than 10 hours = likely system error
+
+    preliminary = [t for t in active_times if MIN_VALID_MINUTES <= t <= MAX_VALID_MINUTES]
+
+    if len(preliminary) < 4:
+        # Not enough data for IQR, use preliminary filtered data
+        if preliminary:
+            return {
+                "avg_minutes": int(statistics.mean(preliminary)),
+                "median_minutes": int(statistics.median(preliminary)),
+                "valid_count": len(preliminary),
+                "excluded_count": len(active_times) - len(preliminary),
+                "min_minutes": min(preliminary),
+                "max_minutes": max(preliminary),
+            }
+        return {
+            "avg_minutes": 0,
+            "median_minutes": 0,
+            "valid_count": 0,
+            "excluded_count": len(active_times),
+            "min_minutes": 0,
+            "max_minutes": 0,
+        }
+
+    # Step 2: Calculate IQR on preliminary data
+    sorted_times = sorted(preliminary)
+    n = len(sorted_times)
+    q1_idx = n // 4
+    q3_idx = (3 * n) // 4
+    q1 = sorted_times[q1_idx]
+    q3 = sorted_times[q3_idx]
+    iqr = q3 - q1
+
+    # Step 3: Define bounds (1.5 * IQR is standard for outlier detection)
+    lower_bound = max(MIN_VALID_MINUTES, q1 - 1.5 * iqr)
+    upper_bound = min(MAX_VALID_MINUTES, q3 + 1.5 * iqr)
+
+    # Step 4: Filter to valid range
+    valid_times = [t for t in preliminary if lower_bound <= t <= upper_bound]
+
+    if not valid_times:
+        valid_times = preliminary  # Fallback to preliminary if IQR too aggressive
+
+    return {
+        "avg_minutes": int(statistics.mean(valid_times)),
+        "median_minutes": int(statistics.median(valid_times)),
+        "valid_count": len(valid_times),
+        "excluded_count": len(active_times) - len(valid_times),
+        "min_minutes": int(min(valid_times)),
+        "max_minutes": int(max(valid_times)),
+    }
+
+
 @app.get("/api/v1/stats")
 async def get_stats(session: Session = Depends(get_session)) -> dict[str, Any]:
-    """Get real-time statistics about active beacons."""
-    import statistics
+    """Get real-time statistics about active V16 beacons.
+
+    Time statistics are normalized to exclude outliers (test activations and system errors).
+    """
     from datetime import datetime, timezone
 
     # Fetch all active beacons
     all_active = session.exec(select(Beacon).where(Beacon.is_active == True)).all()
-    logger.debug(f"Stats: Found {len(all_active)} total active beacons")
 
     # Filter to V16 beacons using the unified helper function
     beacons = [b for b in all_active if is_v16_beacon(b)]
-    logger.debug(f"Stats: Filtered to {len(beacons)} V16 beacons")
-    
 
     total_beacons = len(beacons)
-    
+
     if total_beacons == 0:
         return {
             "total_vehicles": 0,
-            "vulnerable_count": 0,
             "avg_minutes_active": 0,
-            "top_provinces": []
+            "median_minutes_active": 0,
+            "time_stats": {
+                "valid_count": 0,
+                "excluded_count": 0,
+                "min_minutes": 0,
+                "max_minutes": 0,
+            },
+            "top_provinces": [],
+            "by_road_type": {},
         }
-    
-    from vulnerability import analyze_beacon_vulnerability
-    
-    vulnerable_count = 0
+
     active_times = []
-    provinces = {}
-    
+    provinces: dict[str, int] = {}
+    road_types: dict[str, int] = {}
     now = datetime.now(timezone.utc)
-    
+
     for beacon in beacons:
         # Count provinces
         prov = beacon.province or "Desconocida"
         provinces[prov] = provinces.get(prov, 0) + 1
-        
+
+        # Count road types
+        rt = beacon.road_type or "desconocida"
+        road_types[rt] = road_types.get(rt, 0) + 1
+
         # Calculate active time
         if beacon.activation_time:
-            # Ensure timezone awareness
             act_time = beacon.activation_time
             if act_time.tzinfo is None:
                 act_time = act_time.replace(tzinfo=timezone.utc)
-            
             delta = now - act_time
             minutes = int(delta.total_seconds() / 60)
             active_times.append(minutes)
-        
-        # Calculate vulnerability
-        beacon_data = {
-            'id': beacon.id,
-            'external_id': beacon.external_id,
-            'lat': beacon.lat,
-            'lng': beacon.lng,
-            'road_name': beacon.road_name,
-            'road_type': beacon.road_type,
-            'municipality': beacon.municipality,
-            'province': beacon.province,
-            'activation_time': beacon.activation_time,
-        }
-        score = analyze_beacon_vulnerability(beacon_data)
-        if score.total_score >= 50:
-            vulnerable_count += 1
-            
+
+    # Calculate normalized time statistics
+    time_stats = calculate_normalized_time_stats(active_times)
+
     # Sort top provinces
     sorted_provinces = sorted(provinces.items(), key=lambda x: x[1], reverse=True)[:5]
     top_provinces = [{"name": name, "count": count} for name, count in sorted_provinces]
-    
-    # Calculate average time
-    avg_minutes = int(statistics.mean(active_times)) if active_times else 0
-    
+
+    # Sort road types
+    sorted_road_types = dict(sorted(road_types.items(), key=lambda x: -x[1]))
+
     return {
         "total_vehicles": total_beacons,
-        "vulnerable_count": vulnerable_count,
-        "avg_minutes_active": avg_minutes,
-        "top_provinces": top_provinces
+        "avg_minutes_active": time_stats["avg_minutes"],
+        "median_minutes_active": time_stats["median_minutes"],
+        "time_stats": {
+            "valid_count": time_stats["valid_count"],
+            "excluded_count": time_stats["excluded_count"],
+            "min_minutes": time_stats["min_minutes"],
+            "max_minutes": time_stats["max_minutes"],
+        },
+        "top_provinces": top_provinces,
+        "by_road_type": sorted_road_types,
     }
 
 

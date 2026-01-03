@@ -115,13 +115,13 @@
     color: white;
 }
 
-.stat-card.warning {
-    background: linear-gradient(135deg, #f97316, #ea580c);
+.stat-card.secondary {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
     color: white;
 }
 
 .stat-card.info {
-    background: linear-gradient(135deg, #64748b, #475569);
+    background: linear-gradient(135deg, #10b981, #059669);
     color: white;
 }
 
@@ -155,7 +155,76 @@
     opacity: 0.2;
 }
 
-/* Province List */
+/* Stats Note */
+.stats-note {
+    font-size: 11px;
+    color: #94a3b8;
+    text-align: center;
+    margin: -15px 0 20px 0;
+    font-style: italic;
+}
+
+/* Stats Section (shared styles) */
+.stats-section {
+    background: #f8fafc;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 15px;
+}
+
+.stats-section:last-child {
+    margin-bottom: 0;
+}
+
+.stats-section h3 {
+    margin: 0 0 15px 0;
+    font-size: 14px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Road Type List */
+.road-type-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.road-type-item {
+    display: flex;
+    align-items: center;
+    position: relative;
+    height: 26px;
+    z-index: 1;
+}
+
+.road-type-bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+    opacity: 0.2;
+    border-radius: 6px;
+    z-index: -1;
+    transition: width 0.5s ease-out;
+}
+
+.road-type-name {
+    flex: 1;
+    font-weight: 600;
+    color: #334155;
+    font-size: 13px;
+}
+
+.road-type-count {
+    font-weight: 700;
+    color: #0f172a;
+    font-size: 14px;
+}
+
+/* Province List (legacy support) */
 .stats-provinces {
     background: #f8fafc;
     border-radius: 16px;
