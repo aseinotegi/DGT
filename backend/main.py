@@ -500,13 +500,12 @@ async def get_vulnerable_beacons(
     }
 
 
-def calculate_normalized_time_stats(active_times: list[int]) -> dict[str, Any]:
-    """Calculate normalized time statistics excluding outliers.
+def calculate_normalized_time_stats(active_times: list[int], exclude_outliers: bool = True) -> dict[str, Any]:
+    """Calculate time statistics with optional outlier exclusion.
 
-    Uses IQR (Interquartile Range) method to detect and exclude outliers:
-    - Values below Q1 - 1.5*IQR are excluded (likely test activations)
-    - Values above Q3 + 1.5*IQR are excluded (likely system errors)
-    - Also excludes times < 2 min (definitely tests) and > 600 min (10h, likely errors)
+    Args:
+        active_times: List of beacon active times in minutes
+        exclude_outliers: If True, exclude times > 10 hours (likely system errors)
 
     Returns dict with avg, median, valid_count, excluded_count, and range info.
     """
@@ -522,56 +521,26 @@ def calculate_normalized_time_stats(active_times: list[int]) -> dict[str, Any]:
             "max_minutes": 0,
         }
 
-    # Step 1: Apply hard limits first (2 min to 10 hours)
-    MIN_VALID_MINUTES = 2      # Less than 2 min = likely a test
-    MAX_VALID_MINUTES = 600    # More than 10 hours = likely system error
+    # Only exclude obvious errors: times > 10 hours (600 min) are likely system errors
+    # We keep short times now - they are valid (beacons just activated)
+    MAX_VALID_MINUTES = 600  # 10 hours
 
-    preliminary = [t for t in active_times if MIN_VALID_MINUTES <= t <= MAX_VALID_MINUTES]
-
-    if len(preliminary) < 4:
-        # Not enough data for IQR, use preliminary filtered data
-        if preliminary:
-            return {
-                "avg_minutes": int(statistics.mean(preliminary)),
-                "median_minutes": int(statistics.median(preliminary)),
-                "valid_count": len(preliminary),
-                "excluded_count": len(active_times) - len(preliminary),
-                "min_minutes": min(preliminary),
-                "max_minutes": max(preliminary),
-            }
-        return {
-            "avg_minutes": 0,
-            "median_minutes": 0,
-            "valid_count": 0,
-            "excluded_count": len(active_times),
-            "min_minutes": 0,
-            "max_minutes": 0,
-        }
-
-    # Step 2: Calculate IQR on preliminary data
-    sorted_times = sorted(preliminary)
-    n = len(sorted_times)
-    q1_idx = n // 4
-    q3_idx = (3 * n) // 4
-    q1 = sorted_times[q1_idx]
-    q3 = sorted_times[q3_idx]
-    iqr = q3 - q1
-
-    # Step 3: Define bounds (1.5 * IQR is standard for outlier detection)
-    lower_bound = max(MIN_VALID_MINUTES, q1 - 1.5 * iqr)
-    upper_bound = min(MAX_VALID_MINUTES, q3 + 1.5 * iqr)
-
-    # Step 4: Filter to valid range
-    valid_times = [t for t in preliminary if lower_bound <= t <= upper_bound]
+    if exclude_outliers:
+        valid_times = [t for t in active_times if t <= MAX_VALID_MINUTES]
+    else:
+        valid_times = active_times
 
     if not valid_times:
-        valid_times = preliminary  # Fallback to preliminary if IQR too aggressive
+        # All times were excluded, use raw data
+        valid_times = active_times
+
+    excluded_count = len(active_times) - len(valid_times)
 
     return {
         "avg_minutes": int(statistics.mean(valid_times)),
         "median_minutes": int(statistics.median(valid_times)),
         "valid_count": len(valid_times),
-        "excluded_count": len(active_times) - len(valid_times),
+        "excluded_count": excluded_count,
         "min_minutes": int(min(valid_times)),
         "max_minutes": int(max(valid_times)),
     }
