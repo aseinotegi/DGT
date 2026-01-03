@@ -230,7 +230,16 @@ async def run_sync_task(engine):
     
     results = await asyncio.gather(*tasks, return_exceptions=True)
     
-    # Process results
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    
+    # Run DB updates in a separate thread to ensure event loop is never blocked
+    await asyncio.to_thread(process_sync_results, engine, results)
+    
+    logger.info("Sync task completed")
+
+
+def process_sync_results(engine, results):
+    """Process sync results synchronously (to be run in a thread)."""
     with Session(engine) as session:
         for source, result in zip(DataSource, results):
             sync_started = datetime.utcnow()
@@ -257,5 +266,3 @@ async def run_sync_task(engine):
                 session.add(sync_log)
         
         session.commit()
-    
-    logger.info("Sync task completed")

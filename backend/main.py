@@ -70,6 +70,16 @@ def init_db():
             """))
             session.commit()
             logger.info("PostGIS enabled")
+            
+            # Create performance indices manually (since create_all doesn't update existing tables)
+            # Index for common filters
+            session.exec(text("CREATE INDEX IF NOT EXISTS idx_beacons_incident_type ON beacons (incident_type)"))
+            session.exec(text("CREATE INDEX IF NOT EXISTS idx_beacons_detailed_cause ON beacons (detailed_cause_type)"))
+            session.exec(text("CREATE INDEX IF NOT EXISTS idx_beacons_is_active ON beacons (is_active)"))
+            session.exec(text("CREATE INDEX IF NOT EXISTS idx_beacons_source ON beacons (source)"))
+            session.commit()
+            logger.info("Performance indices created")
+            
         except Exception as e:
             logger.warning(f"PostGIS not available (running without spatial features): {e}")
             session.rollback()

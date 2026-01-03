@@ -14,7 +14,7 @@ class BeaconBase(SQLModel):
     source: str = Field(index=True, description="Data source: nacional, pais_vasco, cataluna")
     lat: float = Field(description="Latitude")
     lng: float = Field(description="Longitude")
-    incident_type: str = Field(description="Type of incident (causeType)")
+    incident_type: str = Field(index=True, description="Type of incident (causeType)")
     road_name: Optional[str] = Field(default=None, description="Road identifier")
     road_type: Optional[str] = Field(default=None, index=True, description="Road type: autopista, nacional, autonomica, provincial, local")
     severity: Optional[str] = Field(default=None, description="Incident severity")
@@ -27,7 +27,7 @@ class BeaconBase(SQLModel):
     activation_time: Optional[datetime] = Field(default=None, description="When the beacon was activated")
     # DGT3.0 identification (for V16 beacons)
     source_identification: Optional[str] = Field(default=None, index=True, description="DGT source: DGT or DGT3.0")
-    detailed_cause_type: Optional[str] = Field(default=None, description="Detailed cause: vehicleStuck, roadworks, snowfall, etc.")
+    detailed_cause_type: Optional[str] = Field(default=None, index=True, description="Detailed cause: vehicleStuck, roadworks, snowfall, etc.")
 
 
 class Beacon(BeaconBase, table=True):
