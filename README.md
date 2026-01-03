@@ -1,187 +1,101 @@
-# DGT V16 Live Map 🚨
+# Mapa de Balizas V16 - España
 
-Mapa en tiempo real de incidencias de tráfico en España. El sistema obtiene datos de balizas de emergencia de la DGT (Dirección General de Tráfico), los almacena en una base de datos geoespacial y los visualiza en un mapa web interactivo.
+Visualización en tiempo real de vehículos detenidos en carreteras españolas, con sistema de detección de personas vulnerables.
 
-## 🏗️ Arquitectura
+**Acceso**: [mapabalizasv16.info](https://mapabalizasv16.info)
 
-```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│ DGT Nacional│     │ País Vasco  │     │  Cataluña   │
-│   (v3.6)    │     │   (v1.0)    │     │   (v1.0)    │
-└──────┬──────┘     └──────┬──────┘     └──────┬──────┘
-       │                   │                   │
-       └───────────────────┼───────────────────┘
-                           │ HTTPS
-                           ▼
-                    ┌──────────────┐
-                    │   Backend    │ FastAPI + APScheduler
-                    │  (Python)    │ Sync cada 60s
-                    └──────┬───────┘
-                           │ SQL
-                           ▼
-                    ┌──────────────┐
-                    │  PostgreSQL  │ PostGIS
-                    │    + GIS     │
-                    └──────────────┘
-                           │
-                           ▼
-                    ┌──────────────┐     ┌──────────────┐
-                    │    Nginx     │◄────│   Frontend   │
-                    │   (Proxy)    │     │   (React)    │
-                    └──────┬───────┘     └──────────────┘
-                           │
-                           ▼
-                    ┌──────────────┐
-                    │   Browser    │
-                    └──────────────┘
-```
+---
 
-## 🚀 Inicio Rápido
+## Funcionalidades
 
-### Requisitos
+### 1. Mapa en Tiempo Real
 
-- Docker & Docker Compose
-- 2GB RAM disponible
+El sistema muestra la ubicación exacta de vehículos detenidos (balizas V16) en toda España. Los datos se actualizan automáticamente cada 60 segundos desde tres fuentes oficiales de la DGT:
 
-### Levantar el entorno
+- **Nacional**: Todas las carreteras estatales
+- **País Vasco**: Red autonómica vasca
+- **Cataluña**: Red autonómica catalana
 
-```bash
-# Clonar o navegar al directorio
-cd DGT
+Cada marcador en el mapa incluye:
+- Carretera y punto kilométrico
+- Municipio y provincia
+- Tiempo desde la activación
+- Enlace directo a Google Maps
 
-# Copiar variables de entorno
-cp .env.example .env
+### 2. Persistencia de Incidencias
 
-# Construir y levantar todos los servicios
-docker-compose up -d --build
+Todas las balizas detectadas se almacenan en una base de datos PostgreSQL con información geoespacial. Esto permite:
 
-# Ver logs en tiempo real
-docker-compose logs -f
-```
+- **Historial completo**: Registro de todas las incidencias pasadas
+- **Duración de incidencias**: Tiempo que cada baliza estuvo activa
+- **Análisis temporal**: Patrones por hora del día, día de la semana, etc.
+- **Estadísticas por zona**: Carreteras más conflictivas
 
-### Acceso
+### 3. Detección de Personas Vulnerables
 
-- **Mapa Web**: http://localhost
-- **API Health**: http://localhost/api/health
-- **API Beacons (GeoJSON)**: http://localhost/api/v1/beacons
-- **API Stats**: http://localhost/api/v1/beacons/stats
+El sistema analiza automáticamente cada baliza activa para identificar conductores que podrían estar en situación de riesgo. Accesible desde el botón flotante en el mapa o en `/peligro`.
 
-## 📊 Fuentes de Datos
+#### Metodología de Puntuación (0-100 puntos)
 
-| Región | Formato | URL |
-|--------|---------|-----|
-| Nacional | DATEX II v3.6 | [nap.dgt.es](https://nap.dgt.es/datex2/v3/dgt/SituationPublication/datex2_v36.xml) |
-| País Vasco | DATEX II v1.0 | [infocar.dgt.es/dt-gv](https://infocar.dgt.es/datex2/dt-gv/SituationPublication/all/content.xml) |
-| Cataluña | DATEX II v1.0 | [infocar.dgt.es/sct](https://infocar.dgt.es/datex2/sct/SituationPublication/all/content.xml) |
+Cada baliza recibe una puntuación de vulnerabilidad basada en cuatro factores:
 
-## 🛠️ Stack Tecnológico
+| Factor | Peso | Descripción |
+|--------|------|-------------|
+| **Aislamiento** | 30% | Distancia a núcleos urbanos. Mayor puntuación si está lejos de municipios |
+| **Exposición temporal** | 25% | Tiempo que lleva activa la baliza. A partir de 30 minutos aumenta el riesgo |
+| **Horario nocturno** | 25% | Entre 22:00 y 06:00 se considera horario de mayor vulnerabilidad |
+| **Tipo de vía** | 20% | Autopistas y autovías implican mayor dificultad de auxilio |
 
-### Backend
-- **Python 3.11** con **UV** (gestor de paquetes ultrarrápido)
-- **FastAPI** - Framework web moderno
-- **SQLModel** - ORM con tipado
-- **GeoAlchemy2** - Extensión geoespacial
-- **APScheduler** - Tareas programadas
-- **lxml** - Parsing XML
-- **httpx** - Cliente HTTP async
+#### Niveles de Riesgo
 
-### Base de Datos
-- **PostgreSQL 15** con **PostGIS** 3.3
+- **Crítico (75-100)**: Alerta máxima - posible persona en peligro
+- **Alto (50-74)**: Situación preocupante que requiere atención
+- **Medio (25-49)**: Riesgo moderado
+- **Bajo (0-24)**: Situación normal
 
-### Frontend
-- **React 18** + **TypeScript**
-- **Vite** - Build tool
-- **React-Leaflet** - Mapas interactivos
+#### Factores de Riesgo Detectados
 
-### Infraestructura
-- **Docker** + **Docker Compose**
-- **Nginx** - Reverse proxy
+El sistema identifica y muestra factores específicos como:
+- "Zona aislada sin población cercana"
+- "Más de 2 horas activo"
+- "Horario nocturno (mayor vulnerabilidad)"
+- "Vía de alta velocidad"
 
-## 📁 Estructura del Proyecto
+### 4. Filtrado de Errores
 
-```
-DGT/
-├── docker-compose.yml      # Orquestación de servicios
-├── .env.example            # Variables de entorno
-├── README.md
-├── backend/
-│   ├── Dockerfile          # UV + Python 3.11
-│   ├── pyproject.toml      # Dependencias
-│   ├── main.py             # FastAPI app
-│   ├── config.py           # Configuración
-│   ├── models.py           # Modelos SQLModel
-│   ├── parser.py           # Parser DATEX II
-│   └── worker.py           # ETL concurrente
-├── frontend/
-│   ├── Dockerfile          # Multi-stage build
-│   ├── package.json
-│   ├── vite.config.ts
-│   └── src/
-│       ├── App.tsx
-│       ├── index.css       # Dark theme
-│       └── components/
-│           └── BeaconMap.tsx
-└── nginx/
-    ├── Dockerfile
-    └── nginx.conf          # Reverse proxy config
-```
+Las balizas que llevan más de 15 horas activas se marcan como "posible error" con opacidad reducida. Esto evita falsos positivos causados por balizas mal desactivadas en el sistema de la DGT.
 
-## 🔧 Comandos Útiles
+### 5. Página de Detalle de Vulnerabilidad
 
-```bash
-# Parar servicios
-docker-compose down
+La ruta `/peligro` ofrece:
+- Listado de todas las balizas con puntuación elevada
+- Vista detallada por baliza con desglose de puntuación
+- Factores de riesgo específicos
+- Enlace directo a Google Maps para asistencia
 
-# Ver estado de contenedores
-docker-compose ps
+---
 
-# Reconstruir un servicio específico
-docker-compose up -d --build backend
+## Fuentes de Datos
 
-# Ver logs de un servicio
-docker-compose logs -f backend
+Los datos provienen del sistema oficial DATEX II de la Dirección General de Tráfico (DGT):
 
-# Limpiar todo (incluyendo volúmenes)
-docker-compose down -v
-```
+| Región | Formato | Actualización |
+|--------|---------|---------------|
+| Nacional | DATEX II v3.6 | 60 segundos |
+| País Vasco | DATEX II v1.0 | 60 segundos |
+| Cataluña | DATEX II v1.0 | 60 segundos |
 
-## 📝 API Endpoints
+---
 
-### GET /api/health
-Health check del backend.
+## Tecnologías
 
-### GET /api/v1/beacons
-Devuelve todas las incidencias activas en formato GeoJSON.
+- **Backend**: Python (FastAPI)
+- **Base de datos**: PostgreSQL con extensión geoespacial
+- **Frontend**: React + Leaflet
+- **Hosting**: Railway
 
-```json
-{
-  "type": "FeatureCollection",
-  "features": [...],
-  "metadata": {
-    "total_count": 150,
-    "sources": {
-      "nacional": 100,
-      "pais_vasco": 30,
-      "cataluna": 20
-    }
-  }
-}
-```
+---
 
-### GET /api/v1/beacons/stats
-Estadísticas agregadas por fuente y tipo de incidencia.
-
-## 🎨 Características del Frontend
-
-- **Dark Theme** moderno con acentos de color
-- **Markers por color** según fuente de datos:
-  - 🔵 Azul: DGT Nacional
-  - 🟢 Verde: País Vasco
-  - 🟡 Amarillo: Cataluña
-- **Auto-refresh** cada 60 segundos
-- **Popups** con detalles de incidencia
-- **Responsive** para móvil y desktop
-
-## 📄 Licencia
+## Licencia
 
 MIT License
