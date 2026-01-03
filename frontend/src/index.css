@@ -1248,6 +1248,25 @@ header h1 {
   max-width: 70px;
 }
 
+/* FAB Color Variants based on risk level */
+.alert-fab-critical {
+  background: linear-gradient(135deg, #dc2626, #991b1b);
+  box-shadow: 0 4px 16px rgba(220, 38, 38, 0.4);
+}
+
+.alert-fab-critical:hover {
+  box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5);
+}
+
+.alert-fab-medium {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
+}
+
+.alert-fab-medium:hover {
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5);
+}
+
 /* ========================================
    RESPONSIVE STYLES - Mobile & Tablet
    ======================================== */

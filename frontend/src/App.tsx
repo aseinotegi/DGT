@@ -222,10 +222,10 @@ function App() {
 
                 <BeaconMap data={filteredData} />
 
-                {/* Floating Alert Button - always visible */}
+                {/* Floating Alert Button - color changes based on risk level */}
                 <Link
                     to="/peligro"
-                    className="alert-fab"
+                    className={`alert-fab ${criticalAlerts.length > 0 ? 'alert-fab-critical' : 'alert-fab-medium'}`}
                     title="Ver personas vulnerables"
                 >
                     <span className="alert-fab-count">{validAlerts.length}</span>

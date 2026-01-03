@@ -49,7 +49,7 @@ function PeligroPage() {
     useEffect(() => {
         const fetchAlerts = async () => {
             try {
-                const response = await fetch(`${API_BASE}/api/v1/alerts/vulnerable?min_score=40`)
+                const response = await fetch(`${API_BASE}/api/v1/alerts/vulnerable?min_score=50`)
                 if (!response.ok) return
                 const json = await response.json()
                 setAllAlerts(json.alerts)
