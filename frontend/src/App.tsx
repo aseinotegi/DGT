@@ -228,7 +228,7 @@ function App() {
                     className="alert-fab"
                     title="Ver personas vulnerables"
                 >
-                    <span className="alert-fab-icon">⚠</span>
+                    <img src="/icons/personas_vulnerables.png" alt="Personas vulnerables" className="alert-fab-icon" />
                     {criticalAlerts.length > 0 && (
                         <span className="alert-fab-count">{criticalAlerts.length}</span>
                     )}

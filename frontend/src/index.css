@@ -1072,3 +1072,49 @@ header h1 {
   border-radius: 8px;
   margin-left: 6px;
 }
+
+/* Alert Floating Action Button */
+.alert-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  box-shadow: 0 4px 16px rgba(231, 76, 60, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  z-index: 1500;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.alert-fab:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(231, 76, 60, 0.5);
+}
+
+.alert-fab-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.alert-fab-count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 22px;
+  height: 22px;
+  background: #f1c40f;
+  color: #333;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+}
