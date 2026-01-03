@@ -491,3 +491,84 @@ async def get_vulnerable_beacons(
         'alerts': vulnerable,
     }
 
+
+@app.get("/api/v1/stats")
+async def get_stats(session: Session = Depends(get_session)) -> dict[str, Any]:
+    """Get real-time statistics about active beacons."""
+    from sqlalchemy import func, or_
+    import statistics
+    
+    # Base query for active V16 beacons
+    active_query = select(Beacon).where(
+        Beacon.is_active == True,
+        or_(
+            Beacon.incident_type == 'vehicleObstruction',
+            Beacon.detailed_cause_type == 'vehicleStuck'
+        )
+    )
+    
+    beacons = session.exec(active_query).all()
+    total_beacons = len(beacons)
+    
+    if total_beacons == 0:
+        return {
+            "total_vehicles": 0,
+            "vulnerable_count": 0,
+            "avg_minutes_active": 0,
+            "top_provinces": []
+        }
+    
+    from vulnerability import analyze_beacon_vulnerability
+    
+    vulnerable_count = 0
+    active_times = []
+    provinces = {}
+    
+    now = datetime.now(timezone.utc)
+    
+    for beacon in beacons:
+        # Count provinces
+        prov = beacon.province or "Desconocida"
+        provinces[prov] = provinces.get(prov, 0) + 1
+        
+        # Calculate active time
+        if beacon.activation_time:
+            # Ensure timezone awareness
+            act_time = beacon.activation_time
+            if act_time.tzinfo is None:
+                act_time = act_time.replace(tzinfo=timezone.utc)
+            
+            delta = now - act_time
+            minutes = int(delta.total_seconds() / 60)
+            active_times.append(minutes)
+        
+        # Calculate vulnerability
+        beacon_data = {
+            'id': beacon.id,
+            'external_id': beacon.external_id,
+            'lat': beacon.lat,
+            'lng': beacon.lng,
+            'road_name': beacon.road_name,
+            'road_type': beacon.road_type,
+            'municipality': beacon.municipality,
+            'province': beacon.province,
+            'activation_time': beacon.activation_time,
+        }
+        score = analyze_beacon_vulnerability(beacon_data)
+        if score.total_score >= 50:
+            vulnerable_count += 1
+            
+    # Sort top provinces
+    sorted_provinces = sorted(provinces.items(), key=lambda x: x[1], reverse=True)[:5]
+    top_provinces = [{"name": name, "count": count} for name, count in sorted_provinces]
+    
+    # Calculate average time
+    avg_minutes = int(statistics.mean(active_times)) if active_times else 0
+    
+    return {
+        "total_vehicles": total_beacons,
+        "vulnerable_count": vulnerable_count,
+        "avg_minutes_active": avg_minutes,
+        "top_provinces": top_provinces
+    }
+

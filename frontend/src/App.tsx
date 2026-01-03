@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import BeaconMap from './components/BeaconMap'
-import './index.css'
+import { StatsPanel } from './components/StatsPanel'
+import './App.css'
 
 interface GeoJSONFeature {
     type: 'Feature'
@@ -83,6 +84,7 @@ function App() {
     const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
     const [alerts, setAlerts] = useState<VulnerableAlert[]>([])
     const [showAlertPanel, setShowAlertPanel] = useState(false)
+    const [showStats, setShowStats] = useState(false)
 
     const [filterV16Only] = useState<boolean>(true)
 
@@ -223,14 +225,26 @@ function App() {
                 <BeaconMap data={filteredData} />
 
                 {/* Floating Alert Button - color changes based on risk level */}
-                <Link
-                    to="/peligro"
-                    className={`alert-fab ${criticalAlerts.length > 0 ? 'alert-fab-critical' : 'alert-fab-medium'}`}
-                    title="Ver personas vulnerables"
-                >
-                    <span className="alert-fab-count">{validAlerts.length}</span>
-                    <img src="/icons/personas_vulnerables.png" alt="Personas vulnerables" className="alert-fab-icon" />
-                </Link>
+                <div className="fab-container">
+                    <button
+                        className="alert-fab stats-fab"
+                        onClick={() => setShowStats(true)}
+                        title="Ver estadísticas"
+                    >
+                        <span className="stats-fab-icon">📊</span>
+                    </button>
+
+                    <Link
+                        to="/peligro"
+                        className={`alert-fab ${criticalAlerts.length > 0 ? 'alert-fab-critical' : 'alert-fab-medium'}`}
+                        title="Ver personas vulnerables"
+                    >
+                        <span className="alert-fab-count">{validAlerts.length}</span>
+                        <img src="/icons/personas_vulnerables.png" alt="Personas vulnerables" className="alert-fab-icon" />
+                    </Link>
+                </div>
+
+                <StatsPanel isOpen={showStats} onClose={() => setShowStats(false)} />
             </main>
         </div>
     )

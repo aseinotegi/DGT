@@ -1203,10 +1203,21 @@ header h1 {
 }
 
 /* Alert Floating Action Button */
-.alert-fab {
+.fab-container {
   position: fixed;
   bottom: 24px;
   right: 24px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  z-index: 1500;
+}
+
+.alert-fab {
+  /* Positioning handled by container */
+  position: relative;
+  bottom: auto;
+  right: auto;
   padding: 10px 14px;
   border-radius: 12px;
   background: linear-gradient(135deg, #e74c3c, #c0392b);
@@ -1265,6 +1276,33 @@ header h1 {
 
 .alert-fab-medium:hover {
   box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5);
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5);
+}
+
+/* Stats FAB */
+.stats-fab {
+  background: white;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  border: none;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stats-fab:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.stats-fab-icon {
+  font-size: 24px;
+  line-height: 1;
 }
 
 /* ========================================
@@ -1273,6 +1311,11 @@ header h1 {
 
 /* Tablet (max-width: 768px) */
 @media (max-width: 768px) {
+  .fab-container {
+    bottom: 16px;
+    right: 16px;
+  }
+
   header {
     padding: 0 12px;
     height: 44px;
