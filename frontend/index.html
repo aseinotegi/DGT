@@ -5,39 +5,140 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Primary Meta Tags -->
-  <title>Mapa de Balizas V16 - Vehículos Detenidos en Tiempo Real</title>
-  <meta name="title" content="Mapa de Balizas V16 - Vehículos Detenidos en Tiempo Real" />
+  <!-- Primary Meta Tags - Optimizado para "balizav16" -->
+  <title>BalizaV16 - Mapa de Balizas V16 en Tiempo Real | Vehículos Detenidos España</title>
+  <meta name="title" content="BalizaV16 - Mapa de Balizas V16 en Tiempo Real | Vehículos Detenidos España" />
   <meta name="description"
-    content="Visualización en tiempo real de vehículos detenidos en carreteras españolas. Detección de personas vulnerables y análisis de riesgo." />
-  <meta name="keywords" content="balizas V16, vehículos detenidos, DGT, tráfico España, carreteras, emergencias" />
+    content="BalizaV16: Mapa en tiempo real de balizas V16 y vehículos detenidos en carreteras españolas. Localiza averías, accidentes y emergencias. Datos oficiales DGT actualizados cada minuto." />
+  <meta name="keywords"
+    content="balizav16, baliza v16, balizas v16, mapa balizas v16, vehículos detenidos, DGT, tráfico España, emergencias carretera, averías, accidentes tráfico, señal v16, luz emergencia coche" />
   <meta name="author" content="mapabalizasv16.info" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
   <link rel="canonical" href="https://mapabalizasv16.info/" />
+
+  <!-- Geo Tags -->
+  <meta name="geo.region" content="ES" />
+  <meta name="geo.placename" content="España" />
+  <meta name="language" content="Spanish" />
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://mapabalizasv16.info/" />
-  <meta property="og:title" content="Mapa de Balizas V16 - Vehículos Detenidos" />
+  <meta property="og:title" content="BalizaV16 - Mapa de Balizas V16 en Tiempo Real" />
   <meta property="og:description"
-    content="Mapa en tiempo real de vehículos detenidos en España. Sistema de detección de personas vulnerables." />
+    content="Mapa en tiempo real de balizas V16 y vehículos detenidos en España. Localiza averías y emergencias con datos oficiales DGT." />
   <meta property="og:image" content="https://mapabalizasv16.info/og-image.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
   <meta property="og:locale" content="es_ES" />
+  <meta property="og:site_name" content="BalizaV16" />
 
   <!-- Twitter -->
-  <meta property="twitter:card" content="summary_large_image" />
-  <meta property="twitter:url" content="https://mapabalizasv16.info/" />
-  <meta property="twitter:title" content="Mapa de Balizas V16 - Vehículos Detenidos" />
-  <meta property="twitter:description"
-    content="Mapa en tiempo real de vehículos detenidos en España. Sistema de detección de personas vulnerables." />
-  <meta property="twitter:image" content="https://mapabalizasv16.info/og-image.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="https://mapabalizasv16.info/" />
+  <meta name="twitter:title" content="BalizaV16 - Mapa de Balizas V16 en Tiempo Real" />
+  <meta name="twitter:description"
+    content="Mapa en tiempo real de balizas V16 y vehículos detenidos en España. Datos oficiales DGT." />
+  <meta name="twitter:image" content="https://mapabalizasv16.info/og-image.jpg" />
 
   <!-- Favicon -->
   <link rel="icon" type="image/jpeg" href="/baliza.jpg" />
   <link rel="apple-touch-icon" href="/baliza.jpg" />
 
+  <!-- Preconnect para performance -->
+  <link rel="preconnect" href="https://dgt-production.up.railway.app" />
+  <link rel="dns-prefetch" href="https://dgt-production.up.railway.app" />
+
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+  <!-- Structured Data - JSON-LD (MUY IMPORTANTE PARA SEO) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "BalizaV16",
+    "alternateName": ["Mapa Balizas V16", "Baliza V16", "BalizaV16.info"],
+    "description": "Mapa en tiempo real de balizas V16 y vehículos detenidos en carreteras españolas. Datos oficiales de la DGT actualizados cada minuto.",
+    "url": "https://mapabalizasv16.info/",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "Web",
+    "browserRequirements": "Requires JavaScript",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "EUR"
+    },
+    "author": {
+      "@type": "Organization",
+      "name": "MapaBalizasV16",
+      "url": "https://mapabalizasv16.info/"
+    },
+    "provider": {
+      "@type": "Organization",
+      "name": "DGT - Dirección General de Tráfico",
+      "url": "https://www.dgt.es/"
+    },
+    "areaServed": {
+      "@type": "Country",
+      "name": "España"
+    },
+    "inLanguage": "es",
+    "isAccessibleForFree": true,
+    "keywords": "balizav16, baliza v16, mapa balizas, vehículos detenidos, DGT, tráfico España"
+  }
+  </script>
+
+  <!-- Structured Data - WebSite for Sitelinks Search -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "BalizaV16",
+    "alternateName": "Mapa Balizas V16",
+    "url": "https://mapabalizasv16.info/",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://mapabalizasv16.info/?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
+
+  <!-- Structured Data - FAQPage (ayuda a aparecer en resultados destacados) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "¿Qué es una baliza V16?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "La baliza V16 es un dispositivo luminoso de emergencia obligatorio en España desde 2026. Emite una señal que permite localizar vehículos detenidos en la carretera y alertar a otros conductores."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "¿Cómo funciona el mapa de balizas V16?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "El mapa muestra en tiempo real la ubicación de todas las balizas V16 activas en España, utilizando datos oficiales de la DGT actualizados cada minuto."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "¿Es obligatoria la baliza V16?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Sí, desde el 1 de enero de 2026 es obligatorio llevar una baliza V16 conectada en todos los vehículos en España, sustituyendo a los triángulos de emergencia."
+        }
+      }
+    ]
+  }
+  </script>
 </head>
 
 <body>

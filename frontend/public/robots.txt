@@ -1,5 +1,26 @@
+# Robots.txt para BalizaV16 - mapabalizasv16.info
+
 User-agent: *
 Allow: /
+Allow: /peligro
+Allow: /stats
+
+# Bloquear archivos no necesarios para indexación
+Disallow: /assets/*.js$
+Disallow: /assets/*.css$
+
+# Crawl-delay para no sobrecargar el servidor
+Crawl-delay: 1
 
 # Sitemap
 Sitemap: https://mapabalizasv16.info/sitemap.xml
+
+# Google específico
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+# Bing específico
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1

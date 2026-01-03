@@ -4,10 +4,18 @@
     <loc>https://mapabalizasv16.info/</loc>
     <changefreq>always</changefreq>
     <priority>1.0</priority>
+    <lastmod>2026-01-03</lastmod>
   </url>
   <url>
     <loc>https://mapabalizasv16.info/peligro</loc>
     <changefreq>always</changefreq>
+    <priority>0.9</priority>
+    <lastmod>2026-01-03</lastmod>
+  </url>
+  <url>
+    <loc>https://mapabalizasv16.info/stats</loc>
+    <changefreq>hourly</changefreq>
     <priority>0.8</priority>
+    <lastmod>2026-01-03</lastmod>
   </url>
 </urlset>
