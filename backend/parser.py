@@ -66,17 +66,65 @@ DIRECTION_MAP = {
 
 
 def parse_datetime(value: str) -> Optional[datetime]:
-    """Parse ISO datetime string."""
+    """Parse ISO datetime string with timezone handling.
+    
+    DGT feeds use ISO format with timezone offset (e.g., 2024-01-03T22:30:00+01:00).
+    We parse the full datetime including timezone and convert to UTC for consistency.
+    """
+    from datetime import timezone, timedelta
+    
     if not value:
         return None
     try:
-        # Handle timezone offset
+        # Try Python 3.11+ fromisoformat first (handles most ISO formats)
+        try:
+            dt = datetime.fromisoformat(value)
+            # If it has timezone info, convert to UTC
+            if dt.tzinfo is not None:
+                return dt.astimezone(timezone.utc).replace(tzinfo=None)
+            return dt
+        except ValueError:
+            pass
+        
+        # Fallback: manually parse timezone offset
+        tz_offset = None
+        base_value = value
+        
+        # Handle +HH:MM or +HHMM timezone
         if '+' in value:
-            value = value.split('+')[0]
-        if '.' in value:
-            return datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
-        return datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
-    except:
+            parts = value.rsplit('+', 1)
+            base_value = parts[0]
+            tz_str = parts[1]
+            # Parse hours and minutes from offset
+            if ':' in tz_str:
+                h, m = tz_str.split(':')
+                tz_offset = timedelta(hours=int(h), minutes=int(m))
+            elif len(tz_str) >= 2:
+                tz_offset = timedelta(hours=int(tz_str[:2]), minutes=int(tz_str[2:4]) if len(tz_str) >= 4 else 0)
+        elif '-' in value and 'T' in value:
+            # Check if it's a negative timezone offset (rare in Spain)
+            last_minus = value.rfind('-')
+            if last_minus > value.find('T'):
+                parts = value.rsplit('-', 1)
+                base_value = parts[0]
+                tz_str = parts[1]
+                if ':' in tz_str:
+                    h, m = tz_str.split(':')
+                    tz_offset = timedelta(hours=-int(h), minutes=-int(m))
+        
+        # Parse base datetime
+        if '.' in base_value:
+            dt = datetime.strptime(base_value, "%Y-%m-%dT%H:%M:%S.%f")
+        else:
+            dt = datetime.strptime(base_value, "%Y-%m-%dT%H:%M:%S")
+        
+        # Apply timezone offset to convert to UTC
+        if tz_offset is not None:
+            dt = dt - tz_offset  # Subtract offset to get UTC
+        
+        return dt
+    except Exception as e:
+        logger.warning(f"Failed to parse datetime '{value}': {e}")
         return None
 
 
