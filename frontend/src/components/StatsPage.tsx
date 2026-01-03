@@ -240,7 +240,7 @@ function StatsPage() {
                                             borderRadius: '8px',
                                             fontSize: '12px'
                                         }}
-                                        formatter={(value: number) => [`${value} incidencias`, 'Cantidad']}
+                                        formatter={(value) => [`${value} incidencias`, 'Cantidad']}
                                         labelFormatter={(h) => `${h}:00 - ${h}:59`}
                                     />
                                     <Bar
