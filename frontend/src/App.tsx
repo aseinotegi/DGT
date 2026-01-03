@@ -136,9 +136,7 @@ function App() {
         let filtered = data.features
 
         if (filterV16Only) {
-            filtered = filtered.filter((f: GeoJSONFeature) =>
-                f.properties.incident_type === 'vehicleObstruction'
-            )
+            filtered = filtered.filter((f: GeoJSONFeature) => f.properties.is_v16)
         }
 
         return {
