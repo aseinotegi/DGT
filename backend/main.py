@@ -434,15 +434,17 @@ async def get_vulnerable_beacons(
     from sqlalchemy import or_
     
     # Query active V16 beacons (vehicleObstruction OR vehicleStuck)
-    beacons = session.exec(
-        select(Beacon).where(
-            Beacon.is_active == True,
-            or_(
-                Beacon.incident_type == 'vehicleObstruction',
-                Beacon.detailed_cause_type == 'vehicleStuck'
-            )
+    # Fetch all active and filter in Python to match get_beacons logic (case-insensitive)
+    all_active = session.exec(select(Beacon).where(Beacon.is_active == True)).all()
+    
+    beacons = []
+    for beacon in all_active:
+        is_v16 = (
+            beacon.detailed_cause_type == 'vehicleStuck' or
+            (beacon.incident_type and beacon.incident_type.lower() == 'vehicleobstruction')
         )
-    ).all()
+        if is_v16:
+            beacons.append(beacon)
     
     vulnerable = []
     for beacon in beacons:
@@ -499,15 +501,19 @@ async def get_stats(session: Session = Depends(get_session)) -> dict[str, Any]:
     import statistics
     
     # Base query for active V16 beacons
-    active_query = select(Beacon).where(
-        Beacon.is_active == True,
-        or_(
-            Beacon.incident_type == 'vehicleObstruction',
-            Beacon.detailed_cause_type == 'vehicleStuck'
-        )
-    )
+    # Fetch all active and filter in Python to match get_beacons logic
+    all_active = session.exec(select(Beacon).where(Beacon.is_active == True)).all()
     
-    beacons = session.exec(active_query).all()
+    beacons = []
+    for beacon in all_active:
+        is_v16 = (
+            beacon.detailed_cause_type == 'vehicleStuck' or
+            (beacon.incident_type and beacon.incident_type.lower() == 'vehicleobstruction')
+        )
+        if is_v16:
+            beacons.append(beacon)
+    
+
     total_beacons = len(beacons)
     
     if total_beacons == 0:
