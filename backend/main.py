@@ -499,6 +499,7 @@ async def get_stats(session: Session = Depends(get_session)) -> dict[str, Any]:
     """Get real-time statistics about active beacons."""
     from sqlalchemy import func, or_
     import statistics
+    from datetime import datetime, timezone
     
     # Base query for active V16 beacons
     # Fetch all active and filter in Python to match get_beacons logic
