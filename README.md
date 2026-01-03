@@ -96,6 +96,40 @@ Los datos provienen del sistema oficial DATEX II de la Dirección General de Tr�
 
 ---
 
+## API Pública
+
+Base URL: `https://dgt-production.up.railway.app`
+
+### Endpoints
+
+| Endpoint | Descripción |
+|----------|-------------|
+| `GET /api/health` | Health check del servicio |
+| `GET /api/v1/beacons` | Todas las balizas activas en formato GeoJSON |
+| `GET /api/v1/beacons/stats` | Estadísticas generales por fuente y tipo de incidente |
+| `GET /api/v1/beacons/history` | Historial de balizas inactivas |
+| `GET /api/v1/stats` | Estadísticas de balizas V16 (tiempo medio, provincias, tipos de vía) |
+| `GET /api/v1/stats/trends` | Tendencias históricas (distribución horaria, tendencia diaria) |
+| `GET /api/v1/alerts/vulnerable` | Alertas de balizas con alta puntuación de vulnerabilidad |
+| `GET /api/v1/sync/logs` | Logs de sincronización con la DGT |
+
+### Parámetros
+
+**`/api/v1/stats`**
+- `days` (int): Rango temporal. `0` = tiempo real, `7` = última semana, `30` = último mes
+
+**`/api/v1/stats/trends`**
+- `days` (int): Número de días a incluir en las tendencias (por defecto 7)
+
+**`/api/v1/beacons/history`**
+- `limit` (int): Máximo de registros a devolver (por defecto 100)
+- `include_active` (bool): Incluir balizas activas (por defecto false)
+
+**`/api/v1/alerts/vulnerable`**
+- `min_score` (float): Puntuación mínima de vulnerabilidad (0-100, por defecto 50)
+
+---
+
 ## Autor
 
 Desarrollado por **Ander Sein**
