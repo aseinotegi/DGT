@@ -5,6 +5,7 @@ import {
     BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
     AreaChart, Area, CartesianGrid
 } from 'recharts'
+import './StatsPage.css'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://dgt-production.up.railway.app'
 
