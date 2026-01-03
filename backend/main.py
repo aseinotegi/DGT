@@ -17,6 +17,27 @@ from config import get_settings
 from models import Beacon, SyncLog
 from worker import run_sync_task
 
+
+def is_v16_beacon(beacon: Beacon) -> bool:
+    """Check if a beacon is a V16 (vehicleStuck or vehicleObstruction).
+
+    This function provides consistent V16 detection across all endpoints.
+    A V16 beacon is one where:
+    - detailed_cause_type == 'vehicleStuck', OR
+    - incident_type (case-insensitive) == 'vehicleobstruction'
+
+    Args:
+        beacon: Beacon model instance
+
+    Returns:
+        True if the beacon is a V16, False otherwise
+    """
+    if beacon.detailed_cause_type == 'vehicleStuck':
+        return True
+    if beacon.incident_type and beacon.incident_type.lower() == 'vehicleobstruction':
+        return True
+    return False
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -138,23 +159,21 @@ async def lifespan(app: FastAPI):
 async def prefetch_beacon_isolation_scores(engine):
     """Pre-fetch isolation scores for V16 beacons using Overpass API."""
     from geospatial import prefetch_isolation_scores
-    
+
     try:
         with Session(engine) as session:
-            # Get active V16 beacons
-            beacons = session.exec(
-                select(Beacon).where(
-                    Beacon.is_active == True,
-                    Beacon.incident_type == 'vehicleObstruction'
-                )
+            # Get active V16 beacons using unified helper
+            all_active = session.exec(
+                select(Beacon).where(Beacon.is_active == True)
             ).all()
-            
+            beacons = [b for b in all_active if is_v16_beacon(b)]
+
             if not beacons:
                 return
-            
+
             # Get coordinates
             coords = [(b.lat, b.lng) for b in beacons]
-            logger.info(f"Pre-fetching isolation scores for {len(coords)} beacons...")
+            logger.info(f"Pre-fetching isolation scores for {len(coords)} V16 beacons...")
             
             # Prefetch (with rate limiting built in)
             await prefetch_isolation_scores(coords)
@@ -259,10 +278,7 @@ async def get_beacons(session: Session = Depends(get_session)) -> dict[str, Any]
                 "updated_at": beacon.updated_at.isoformat() if beacon.updated_at else None,
                 "source_identification": beacon.source_identification,
                 "detailed_cause_type": beacon.detailed_cause_type,
-                "is_v16": (
-                    beacon.detailed_cause_type == "vehicleStuck" or
-                    beacon.incident_type.lower() == "vehicleobstruction"
-                ),
+                "is_v16": is_v16_beacon(beacon),
                 "minutes_active": minutes_active,
                 "is_stale": is_stale,
             }
@@ -423,28 +439,18 @@ async def get_vulnerable_beacons(
     session: Session = Depends(get_session)
 ) -> dict[str, Any]:
     """Get beacons with high vulnerability scores.
-    
+
     Args:
         min_score: Minimum vulnerability score (0-100) to include.
-        
+
     Returns:
         List of vulnerable beacons with scores and risk factors.
     """
     from vulnerability import analyze_beacon_vulnerability, HIGH_RISK_THRESHOLD
-    from sqlalchemy import or_
-    
-    # Query active V16 beacons (vehicleObstruction OR vehicleStuck)
-    # Fetch all active and filter in Python to match get_beacons logic (case-insensitive)
+
+    # Fetch all active beacons and filter to V16 using unified helper
     all_active = session.exec(select(Beacon).where(Beacon.is_active == True)).all()
-    
-    beacons = []
-    for beacon in all_active:
-        is_v16 = (
-            beacon.detailed_cause_type == 'vehicleStuck' or
-            (beacon.incident_type and beacon.incident_type.lower() == 'vehicleobstruction')
-        )
-        if is_v16:
-            beacons.append(beacon)
+    beacons = [b for b in all_active if is_v16_beacon(b)]
     
     vulnerable = []
     for beacon in beacons:
@@ -497,22 +503,16 @@ async def get_vulnerable_beacons(
 @app.get("/api/v1/stats")
 async def get_stats(session: Session = Depends(get_session)) -> dict[str, Any]:
     """Get real-time statistics about active beacons."""
-    from sqlalchemy import func, or_
     import statistics
     from datetime import datetime, timezone
-    
-    # Base query for active V16 beacons
-    # Fetch all active and filter in Python to match get_beacons logic
+
+    # Fetch all active beacons
     all_active = session.exec(select(Beacon).where(Beacon.is_active == True)).all()
-    
-    beacons = []
-    for beacon in all_active:
-        is_v16 = (
-            beacon.detailed_cause_type == 'vehicleStuck' or
-            (beacon.incident_type and beacon.incident_type.lower() == 'vehicleobstruction')
-        )
-        if is_v16:
-            beacons.append(beacon)
+    logger.debug(f"Stats: Found {len(all_active)} total active beacons")
+
+    # Filter to V16 beacons using the unified helper function
+    beacons = [b for b in all_active if is_v16_beacon(b)]
+    logger.debug(f"Stats: Filtered to {len(beacons)} V16 beacons")
     
 
     total_beacons = len(beacons)
