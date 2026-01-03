@@ -230,8 +230,6 @@ async def run_sync_task(engine):
     
     results = await asyncio.gather(*tasks, return_exceptions=True)
     
-    results = await asyncio.gather(*tasks, return_exceptions=True)
-    
     # Run DB updates in a separate thread to ensure event loop is never blocked
     await asyncio.to_thread(process_sync_results, engine, results)
     

@@ -220,10 +220,8 @@ async def get_beacons(session: Session = Depends(get_session)) -> dict[str, Any]
                 "source_identification": beacon.source_identification,
                 "detailed_cause_type": beacon.detailed_cause_type,
                 "is_v16": (
-                    beacon.incident_type.lower() == "accident" or
-                    beacon.incident_type.lower() == "vehicleobstruction" or
-                    (beacon.incident_type.lower() == "environmentalobstruction" and beacon.detailed_cause_type == "vehicleStuck") or
-                    (beacon.incident_type.lower() == "obstruction" and beacon.detailed_cause_type == "vehicleStuck")
+                    beacon.detailed_cause_type == "vehicleStuck" or
+                    beacon.incident_type.lower() == "vehicleobstruction"
                 ),
                 "minutes_active": minutes_active,
                 "is_stale": is_stale,
@@ -393,12 +391,16 @@ async def get_vulnerable_beacons(
         List of vulnerable beacons with scores and risk factors.
     """
     from vulnerability import analyze_beacon_vulnerability, HIGH_RISK_THRESHOLD
+    from sqlalchemy import or_
     
-    # Query active vehicleObstruction beacons (V16)
+    # Query active V16 beacons (vehicleObstruction OR vehicleStuck)
     beacons = session.exec(
         select(Beacon).where(
             Beacon.is_active == True,
-            Beacon.incident_type == 'vehicleObstruction'
+            or_(
+                Beacon.incident_type == 'vehicleObstruction',
+                Beacon.detailed_cause_type == 'vehicleStuck'
+            )
         )
     ).all()
     
