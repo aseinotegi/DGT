@@ -5,7 +5,6 @@ import {
     BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
     AreaChart, Area, CartesianGrid
 } from 'recharts'
-import './StatsPage.css'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://dgt-production.up.railway.app'
 
@@ -65,7 +64,7 @@ function formatTime(minutes: number): string {
 }
 
 const fadeIn = {
-    hidden: { opacity: 0, y: 20 },
+    hidden: { opacity: 0, y: 10 },
     visible: { opacity: 1, y: 0 }
 }
 
@@ -98,8 +97,12 @@ function StatsPage() {
 
     if (loading) {
         return (
-            <div className="stats-page">
-                <div className="stats-loading-full">Cargando estadísticas...</div>
+            <div className="peligro-page">
+                <header className="peligro-header">
+                    <Link to="/" className="back-button">← Volver al mapa</Link>
+                    <h1>Estadísticas</h1>
+                </header>
+                <div className="peligro-loading">Cargando estadísticas...</div>
             </div>
         )
     }
@@ -112,94 +115,92 @@ function StatsPage() {
         : 1
 
     return (
-        <div className="stats-page">
-            <header className="stats-header">
+        <div className="peligro-page">
+            <header className="peligro-header">
                 <Link to="/" className="back-button">← Volver al mapa</Link>
                 <h1>Estadísticas en tiempo real</h1>
             </header>
 
-            <main className="stats-main">
+            <div className="stats-content">
                 {/* KPI Cards */}
-                <motion.section
-                    className="kpi-section"
+                <motion.div
+                    className="stats-kpi-grid"
                     initial="hidden"
                     animate="visible"
                     variants={fadeIn}
-                    transition={{ duration: 0.4 }}
+                    transition={{ duration: 0.3 }}
                 >
-                    <div className="kpi-grid">
-                        <div className="kpi-card primary">
-                            <div className="kpi-value">{stats?.total_vehicles || 0}</div>
-                            <div className="kpi-label">Balizas V16 activas</div>
-                        </div>
-
-                        <div className="kpi-card success">
-                            <div className="kpi-value">{formatTime(stats?.avg_minutes_active || 0)}</div>
-                            <div className="kpi-label">Tiempo medio</div>
-                        </div>
-
-                        <div className="kpi-card purple">
-                            <div className="kpi-value">{formatTime(stats?.median_minutes_active || 0)}</div>
-                            <div className="kpi-label">Mediana</div>
-                        </div>
-
-                        {trends && (
-                            <div className={`kpi-card trend ${trends.trend_vs_yesterday.direction}`}>
-                                <div className="kpi-value">
-                                    {trends.trend_vs_yesterday.direction === 'up' && '↑'}
-                                    {trends.trend_vs_yesterday.direction === 'down' && '↓'}
-                                    {trends.trend_vs_yesterday.direction === 'stable' && '→'}
-                                    {Math.abs(trends.trend_vs_yesterday.percentage)}%
-                                </div>
-                                <div className="kpi-label">vs ayer</div>
-                            </div>
-                        )}
+                    <div className="stats-kpi-card stats-kpi-primary">
+                        <div className="stats-kpi-value">{stats?.total_vehicles || 0}</div>
+                        <div className="stats-kpi-label">Balizas V16 activas</div>
                     </div>
-                </motion.section>
 
-                {/* Charts Section */}
-                <div className="charts-grid">
-                    {/* Daily Trend Chart */}
-                    <motion.section
-                        className="chart-card"
+                    <div className="stats-kpi-card stats-kpi-success">
+                        <div className="stats-kpi-value">{formatTime(stats?.avg_minutes_active || 0)}</div>
+                        <div className="stats-kpi-label">Tiempo medio</div>
+                    </div>
+
+                    <div className="stats-kpi-card stats-kpi-info">
+                        <div className="stats-kpi-value">{formatTime(stats?.median_minutes_active || 0)}</div>
+                        <div className="stats-kpi-label">Mediana</div>
+                    </div>
+
+                    {trends && (
+                        <div className={`stats-kpi-card stats-kpi-trend stats-kpi-trend-${trends.trend_vs_yesterday.direction}`}>
+                            <div className="stats-kpi-value">
+                                {trends.trend_vs_yesterday.direction === 'up' && '↑'}
+                                {trends.trend_vs_yesterday.direction === 'down' && '↓'}
+                                {trends.trend_vs_yesterday.direction === 'stable' && '→'}
+                                {Math.abs(trends.trend_vs_yesterday.percentage)}%
+                            </div>
+                            <div className="stats-kpi-label">vs ayer</div>
+                        </div>
+                    )}
+                </motion.div>
+
+                {/* Charts */}
+                <div className="stats-charts-grid">
+                    <motion.div
+                        className="stats-chart-card"
                         initial="hidden"
                         animate="visible"
                         variants={fadeIn}
-                        transition={{ duration: 0.4, delay: 0.1 }}
+                        transition={{ duration: 0.3, delay: 0.1 }}
                     >
-                        <h2>Tendencia diaria</h2>
-                        <p className="chart-subtitle">Incidencias V16 últimos 7 días</p>
-                        <div className="chart-container">
-                            <ResponsiveContainer width="100%" height={200}>
+                        <h3>Tendencia diaria</h3>
+                        <p className="stats-chart-subtitle">Incidencias V16 últimos 7 días</p>
+                        <div className="stats-chart-container">
+                            <ResponsiveContainer width="100%" height={180}>
                                 <AreaChart data={trends?.daily_trend || []}>
                                     <defs>
                                         <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                            <stop offset="5%" stopColor="#3498db" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#3498db" stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
                                     <XAxis
                                         dataKey="label"
-                                        tick={{ fontSize: 12, fill: '#64748b' }}
-                                        axisLine={{ stroke: '#e2e8f0' }}
+                                        tick={{ fontSize: 11, fill: '#666' }}
+                                        axisLine={{ stroke: '#ddd' }}
                                     />
                                     <YAxis
-                                        tick={{ fontSize: 12, fill: '#64748b' }}
-                                        axisLine={{ stroke: '#e2e8f0' }}
+                                        tick={{ fontSize: 11, fill: '#666' }}
+                                        axisLine={{ stroke: '#ddd' }}
+                                        width={30}
                                     />
                                     <Tooltip
                                         contentStyle={{
                                             background: '#fff',
-                                            border: '1px solid #e2e8f0',
-                                            borderRadius: '8px',
+                                            border: '1px solid #ddd',
+                                            borderRadius: '4px',
                                             fontSize: '12px'
                                         }}
                                     />
                                     <Area
                                         type="monotone"
                                         dataKey="count"
-                                        stroke="#3b82f6"
+                                        stroke="#3498db"
                                         strokeWidth={2}
                                         fillOpacity={1}
                                         fill="url(#colorCount)"
@@ -207,140 +208,140 @@ function StatsPage() {
                                 </AreaChart>
                             </ResponsiveContainer>
                         </div>
-                    </motion.section>
+                    </motion.div>
 
-                    {/* Hourly Distribution Chart */}
-                    <motion.section
-                        className="chart-card"
+                    <motion.div
+                        className="stats-chart-card"
                         initial="hidden"
                         animate="visible"
                         variants={fadeIn}
-                        transition={{ duration: 0.4, delay: 0.2 }}
+                        transition={{ duration: 0.3, delay: 0.15 }}
                     >
-                        <h2>Distribución horaria</h2>
-                        <p className="chart-subtitle">Activaciones por hora del día (hora España)</p>
-                        <div className="chart-container">
-                            <ResponsiveContainer width="100%" height={200}>
+                        <h3>Distribución horaria</h3>
+                        <p className="stats-chart-subtitle">Activaciones por hora (hora España)</p>
+                        <div className="stats-chart-container">
+                            <ResponsiveContainer width="100%" height={180}>
                                 <BarChart data={trends?.hourly_distribution || []}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
                                     <XAxis
                                         dataKey="hour"
-                                        tick={{ fontSize: 10, fill: '#64748b' }}
-                                        axisLine={{ stroke: '#e2e8f0' }}
-                                        tickFormatter={(h) => `${h}h`}
+                                        tick={{ fontSize: 9, fill: '#666' }}
+                                        axisLine={{ stroke: '#ddd' }}
+                                        tickFormatter={(h) => `${h}`}
                                     />
                                     <YAxis
-                                        tick={{ fontSize: 12, fill: '#64748b' }}
-                                        axisLine={{ stroke: '#e2e8f0' }}
+                                        tick={{ fontSize: 11, fill: '#666' }}
+                                        axisLine={{ stroke: '#ddd' }}
+                                        width={25}
                                     />
                                     <Tooltip
                                         contentStyle={{
                                             background: '#fff',
-                                            border: '1px solid #e2e8f0',
-                                            borderRadius: '8px',
+                                            border: '1px solid #ddd',
+                                            borderRadius: '4px',
                                             fontSize: '12px'
                                         }}
-                                        formatter={(value) => [`${value} incidencias`, 'Cantidad']}
+                                        formatter={(value) => [`${value}`, 'Incidencias']}
                                         labelFormatter={(h) => `${h}:00 - ${h}:59`}
                                     />
                                     <Bar
                                         dataKey="count"
-                                        fill="#10b981"
-                                        radius={[4, 4, 0, 0]}
+                                        fill="#2ecc71"
+                                        radius={[2, 2, 0, 0]}
                                     />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
-                    </motion.section>
+                    </motion.div>
                 </div>
 
-                {/* Bottom Grid: Road Types + Provinces */}
-                <div className="bottom-grid">
-                    {/* Road Types */}
-                    <motion.section
-                        className="list-card"
+                {/* Lists */}
+                <div className="stats-lists-grid">
+                    <motion.div
+                        className="stats-list-card"
                         initial="hidden"
                         animate="visible"
                         variants={fadeIn}
-                        transition={{ duration: 0.4, delay: 0.3 }}
+                        transition={{ duration: 0.3, delay: 0.2 }}
                     >
-                        <h2>Por tipo de vía</h2>
-                        <div className="list-items">
+                        <h3>Por tipo de vía</h3>
+                        <div className="stats-list">
                             {roadTypeEntries.map(([type, count]) => (
-                                <div key={type} className="list-item">
-                                    <span className="list-item-name">
-                                        {ROAD_TYPE_LABELS[type] || type}
-                                    </span>
-                                    <div className="list-item-bar-container">
+                                <div key={type} className="stats-list-item">
+                                    <span className="stats-list-name">{ROAD_TYPE_LABELS[type] || type}</span>
+                                    <div className="stats-list-bar-bg">
                                         <motion.div
-                                            className="list-item-bar"
+                                            className="stats-list-bar"
                                             initial={{ width: 0 }}
                                             animate={{ width: `${(count / maxRoadCount) * 100}%` }}
-                                            transition={{ duration: 0.6, delay: 0.4 }}
+                                            transition={{ duration: 0.5, delay: 0.3 }}
                                         />
                                     </div>
-                                    <span className="list-item-count">{count}</span>
+                                    <span className="stats-list-count">{count}</span>
                                 </div>
                             ))}
                         </div>
-                    </motion.section>
+                    </motion.div>
 
-                    {/* Top Provinces */}
-                    <motion.section
-                        className="list-card"
+                    <motion.div
+                        className="stats-list-card"
                         initial="hidden"
                         animate="visible"
                         variants={fadeIn}
-                        transition={{ duration: 0.4, delay: 0.4 }}
+                        transition={{ duration: 0.3, delay: 0.25 }}
                     >
-                        <h2>Top provincias</h2>
-                        <div className="list-items">
+                        <h3>Top provincias</h3>
+                        <div className="stats-list">
                             {stats?.top_provinces.map((prov, i) => (
-                                <div key={prov.name} className="list-item">
-                                    <span className="list-item-rank">{i + 1}</span>
-                                    <span className="list-item-name">{prov.name}</span>
-                                    <div className="list-item-bar-container">
+                                <div key={prov.name} className="stats-list-item">
+                                    <span className="stats-list-rank">{i + 1}</span>
+                                    <span className="stats-list-name">{prov.name}</span>
+                                    <div className="stats-list-bar-bg">
                                         <motion.div
-                                            className="list-item-bar province"
+                                            className="stats-list-bar stats-list-bar-orange"
                                             initial={{ width: 0 }}
-                                            animate={{
-                                                width: `${(prov.count / (stats.top_provinces[0]?.count || 1)) * 100}%`
-                                            }}
-                                            transition={{ duration: 0.6, delay: 0.5 + i * 0.1 }}
+                                            animate={{ width: `${(prov.count / (stats.top_provinces[0]?.count || 1)) * 100}%` }}
+                                            transition={{ duration: 0.5, delay: 0.35 + i * 0.05 }}
                                         />
                                     </div>
-                                    <span className="list-item-count">{prov.count}</span>
+                                    <span className="stats-list-count">{prov.count}</span>
                                 </div>
                             ))}
                         </div>
-                    </motion.section>
+                    </motion.div>
                 </div>
 
-                {/* Data Sources */}
+                {/* Sources */}
                 {trends?.by_source && Object.keys(trends.by_source).length > 0 && (
-                    <motion.section
-                        className="sources-card"
+                    <motion.div
+                        className="stats-sources-card"
                         initial="hidden"
                         animate="visible"
                         variants={fadeIn}
-                        transition={{ duration: 0.4, delay: 0.5 }}
+                        transition={{ duration: 0.3, delay: 0.3 }}
                     >
-                        <h2>Fuentes de datos</h2>
-                        <div className="sources-grid">
+                        <h3>Fuentes de datos</h3>
+                        <div className="stats-sources">
                             {Object.entries(trends.by_source).map(([source, count]) => (
-                                <div key={source} className="source-item">
-                                    <span className="source-name">
+                                <div key={source} className="stats-source-item">
+                                    <span className="stats-source-name">
                                         {source === 'nacional' ? 'DGT Nacional' :
                                             source === 'pais_vasco' ? 'País Vasco' :
                                                 source === 'cataluna' ? 'Cataluña' : source}
                                     </span>
-                                    <span className="source-count">{count}</span>
+                                    <span className="stats-source-count">{count}</span>
                                 </div>
                             ))}
                         </div>
-                    </motion.section>
+                    </motion.div>
                 )}
-            </main>
+
+                <footer className="site-footer">
+                    <span>© 2026</span>
+                    <span className="footer-separator">|</span>
+                    <span>Desarrollado por <a href="https://mapabalizasv16.info" target="_blank" rel="noopener noreferrer">Ander Sein</a></span>
+                </footer>
+            </div>
         </div>
     )
 }

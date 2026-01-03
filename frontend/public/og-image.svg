@@ -87,6 +87,7 @@
     </g>
   </g>
 
-  <!-- URL at bottom -->
-  <text x="600" y="590" font-family="Arial, sans-serif" font-size="24" fill="#64748b" text-anchor="middle" font-weight="600">mapabalizasv16.info</text>
+  <!-- URL and Author at bottom -->
+  <text x="600" y="575" font-family="Arial, sans-serif" font-size="24" fill="#64748b" text-anchor="middle" font-weight="600">mapabalizasv16.info</text>
+  <text x="600" y="605" font-family="Arial, sans-serif" font-size="16" fill="#475569" text-anchor="middle" font-weight="400">por Ander Sein</text>
 </svg>

@@ -96,6 +96,14 @@ Los datos provienen del sistema oficial DATEX II de la Dirección General de Tr�
 
 ---
 
+## Autor
+
+Desarrollado por **Ander Sein**
+
+🌐 [mapabalizasv16.info](https://mapabalizasv16.info)
+
+---
+
 ## Licencia
 
-MIT License
+MIT License - © 2026 Ander Sein
