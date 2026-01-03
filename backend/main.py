@@ -579,3 +579,45 @@ async def get_stats(session: Session = Depends(get_session)) -> dict[str, Any]:
         "top_provinces": top_provinces
     }
 
+
+@app.get("/api/v1/debug/beacon-types")
+async def debug_beacon_types(session: Session = Depends(get_session)) -> dict[str, Any]:
+    """Debug endpoint to see unique values of incident_type and detailed_cause_type.
+
+    This helps diagnose why V16 filtering might not be working.
+    """
+    # Get all active beacons
+    all_active = session.exec(select(Beacon).where(Beacon.is_active == True)).all()
+
+    # Collect unique values
+    incident_types: dict[str, int] = {}
+    detailed_cause_types: dict[str, int] = {}
+    source_ids: dict[str, int] = {}
+    v16_matches = 0
+
+    for beacon in all_active:
+        # Count incident_type values
+        it = beacon.incident_type or "(None)"
+        incident_types[it] = incident_types.get(it, 0) + 1
+
+        # Count detailed_cause_type values
+        dct = beacon.detailed_cause_type or "(None)"
+        detailed_cause_types[dct] = detailed_cause_types.get(dct, 0) + 1
+
+        # Count source_identification values
+        si = beacon.source_identification or "(None)"
+        source_ids[si] = source_ids.get(si, 0) + 1
+
+        # Check if matches V16 filter
+        if is_v16_beacon(beacon):
+            v16_matches += 1
+
+    return {
+        "total_active_beacons": len(all_active),
+        "v16_matches": v16_matches,
+        "v16_filter_logic": "detailed_cause_type == 'vehicleStuck' OR incident_type.lower() == 'vehicleobstruction'",
+        "incident_type_values": dict(sorted(incident_types.items(), key=lambda x: -x[1])),
+        "detailed_cause_type_values": dict(sorted(detailed_cause_types.items(), key=lambda x: -x[1])),
+        "source_identification_values": dict(sorted(source_ids.items(), key=lambda x: -x[1])),
+    }
+
