@@ -146,7 +146,9 @@ function App() {
     }, [data, filterV16Only])
 
     const filteredCount = filteredData?.features.length || 0
-    const criticalAlerts = alerts.filter(a => a.risk_level === 'critical' || a.risk_level === 'high')
+    // Only count valid alerts (not stale - less than 10 hours = 600 minutes)
+    const validAlerts = alerts.filter(a => a.minutes_active < 600)
+    const criticalAlerts = validAlerts.filter(a => a.risk_level === 'critical' || a.risk_level === 'high')
 
     if (loading && !data) {
         return <div className="loading">Cargando mapa de incidencias...</div>
@@ -163,6 +165,12 @@ function App() {
                     <span className="count">
                         {filteredCount} balizas activas
                     </span>
+                    {validAlerts.length > 0 && (
+                        <Link to="/peligro" className="vulnerable-counter">
+                            <span className="vulnerable-icon">⚠</span>
+                            <span>{validAlerts.length} en riesgo</span>
+                        </Link>
+                    )}
                     {lastUpdate && (
                         <span className="last-update">
                             {lastUpdate.toLocaleTimeString()}

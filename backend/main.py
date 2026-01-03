@@ -181,7 +181,7 @@ async def get_beacons(session: Session = Depends(get_session)) -> dict[str, Any]
     
     features = []
     now_utc = datetime.now(timezone.utc)
-    MAX_HOURS_BEFORE_STALE = 15
+    MAX_HOURS_BEFORE_STALE = 10  # Beacons active >10h are likely DGT system errors
     
     for beacon in beacons:
         # Calculate minutes active

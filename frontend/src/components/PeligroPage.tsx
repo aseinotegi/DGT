@@ -155,35 +155,77 @@ function PeligroPage() {
                         Estas personas podrían necesitar asistencia.
                     </p>
 
-                    {allAlerts.length === 0 ? (
-                        <div className="no-alerts">
-                            No hay alertas de vulnerabilidad en este momento
-                        </div>
-                    ) : (
-                        <div className="alerts-grid">
-                            {allAlerts.map((a) => (
-                                <Link
-                                    to={`/peligro?id=${a.beacon_id}`}
-                                    key={a.beacon_id}
-                                    className="alert-card"
-                                >
-                                    <div className="alert-card-header">
-                                        <span
-                                            className="risk-badge-small"
-                                            style={{ backgroundColor: getRiskColor(a.risk_level) }}
-                                        >
-                                            {a.total_score.toFixed(0)}
-                                        </span>
-                                        <span className="alert-road">{a.road_name || 'Desconocido'}</span>
+                    {(() => {
+                        const STALE_MINUTES = 600 // 10 hours
+                        const validAlerts = allAlerts.filter(a => a.minutes_active < STALE_MINUTES)
+                        const staleAlerts = allAlerts.filter(a => a.minutes_active >= STALE_MINUTES)
+
+                        return (
+                            <>
+                                {validAlerts.length === 0 && staleAlerts.length === 0 ? (
+                                    <div className="no-alerts">
+                                        No hay alertas de vulnerabilidad en este momento
                                     </div>
-                                    <div className="alert-card-body">
-                                        <span>{a.municipality}</span>
-                                        <span className="time">{formatDuration(a.minutes_active)}</span>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
-                    )}
+                                ) : (
+                                    <>
+                                        {/* Valid Alerts */}
+                                        {validAlerts.length > 0 && (
+                                            <div className="alerts-grid">
+                                                {validAlerts.map((a) => (
+                                                    <Link
+                                                        to={`/peligro?id=${a.beacon_id}`}
+                                                        key={a.beacon_id}
+                                                        className="alert-card"
+                                                    >
+                                                        <div className="alert-card-header">
+                                                            <span
+                                                                className="risk-badge-small"
+                                                                style={{ backgroundColor: getRiskColor(a.risk_level) }}
+                                                            >
+                                                                {a.total_score.toFixed(0)}
+                                                            </span>
+                                                            <span className="alert-road">{a.road_name || 'Desconocido'}</span>
+                                                        </div>
+                                                        <div className="alert-card-body">
+                                                            <span>{a.municipality}</span>
+                                                            <span className="time">{formatDuration(a.minutes_active)}</span>
+                                                        </div>
+                                                    </Link>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {/* Stale/Error Section */}
+                                        {staleAlerts.length > 0 && (
+                                            <div className="stale-section">
+                                                <div className="stale-section-header">
+                                                    <span className="stale-icon">⚠️</span>
+                                                    <div>
+                                                        <h3>Posibles errores del sistema DGT</h3>
+                                                        <p>Balizas activas más de 10 horas - probablemente datos incorrectos del sistema</p>
+                                                    </div>
+                                                </div>
+                                                <div className="stale-alerts-grid">
+                                                    {staleAlerts.map((a) => (
+                                                        <div key={a.beacon_id} className="stale-alert-card">
+                                                            <div className="stale-alert-header">
+                                                                <span className="stale-badge-small">{a.total_score.toFixed(0)}</span>
+                                                                <span className="stale-road">{a.road_name || 'Desconocido'}</span>
+                                                            </div>
+                                                            <div className="stale-alert-body">
+                                                                <span>{a.municipality}</span>
+                                                                <span className="stale-time">{formatDuration(a.minutes_active)}</span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </>
+                        )
+                    })()}
                 </div>
             )}
         </div>
