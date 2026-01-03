@@ -16,6 +16,12 @@ class Settings(BaseSettings):
     
     # Sync settings
     sync_interval_seconds: int = 60
+
+    # Debug mode (set to false in production)
+    debug_mode: bool = False
+
+    # CORS allowed origins (comma-separated in env var)
+    cors_origins: str = "https://mapabalizasv16.info"
     
     class Config:
         env_file = ".env"

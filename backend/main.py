@@ -7,7 +7,7 @@ import logging
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from sqlmodel import Session, SQLModel, create_engine, select, text
@@ -183,20 +183,26 @@ async def prefetch_beacon_isolation_scores(engine):
         logger.error(f"Error pre-fetching isolation scores: {e}")
 
 
-# FastAPI application
+# FastAPI application - disable docs in production
 app = FastAPI(
     title="DGT V16 Live Map API",
     description="Real-time traffic incident data from DGT España",
     version="1.0.0",
     lifespan=lifespan,
+    docs_url="/docs" if settings.debug_mode else None,
+    redoc_url="/redoc" if settings.debug_mode else None,
+    openapi_url="/openapi.json" if settings.debug_mode else None,
 )
 
-# CORS middleware
+# CORS middleware - restrict to allowed origins
+# In production: only mapabalizasv16.info
+# In development: add localhost origins via CORS_ORIGINS env var
+cors_origins = [origin.strip() for origin in settings.cors_origins.split(",")]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET"],  # API is read-only
     allow_headers=["*"],
 )
 
@@ -337,18 +343,10 @@ async def get_beacon_stats(session: Session = Depends(get_session)) -> dict[str,
 @app.get("/api/v1/beacons/history")
 async def get_beacon_history(
     session: Session = Depends(get_session),
-    limit: int = 100,
+    limit: int = Query(default=100, ge=1, le=1000, description="Max records (1-1000)"),
     include_active: bool = False
 ) -> dict[str, Any]:
-    """Get historical beacons (inactive ones).
-    
-    Args:
-        limit: Maximum number of records to return.
-        include_active: Whether to include currently active beacons.
-    
-    Returns:
-        List of beacons with their duration.
-    """
+    """Get historical beacons (inactive ones)."""
     if include_active:
         query = select(Beacon).order_by(Beacon.created_at.desc()).limit(limit)
     else:
@@ -385,67 +383,54 @@ async def get_beacon_history(
     }
 
 
-@app.get("/api/v1/sync/logs")
-async def get_sync_logs(
-    session: Session = Depends(get_session),
-    limit: int = 50,
-    source: str = None
-) -> dict[str, Any]:
-    """Get sync operation logs.
-    
-    Args:
-        limit: Maximum number of logs to return.
-        source: Filter by source (nacional, pais_vasco, cataluna).
-    
-    Returns:
-        List of sync logs with metrics.
-    """
-    query = select(SyncLog).order_by(SyncLog.sync_started_at.desc()).limit(limit)
-    
-    if source:
-        query = query.where(SyncLog.source == source)
-    
-    logs = session.exec(query).all()
-    
-    result = []
-    for log in logs:
-        duration_seconds = None
-        if log.sync_completed_at and log.sync_started_at:
-            duration_seconds = (log.sync_completed_at - log.sync_started_at).total_seconds()
-        
-        result.append({
-            "id": log.id,
-            "source": log.source,
-            "sync_started_at": log.sync_started_at.isoformat() if log.sync_started_at else None,
-            "sync_completed_at": log.sync_completed_at.isoformat() if log.sync_completed_at else None,
-            "sync_duration_seconds": duration_seconds,
-            "beacons_in_feed": log.beacons_in_feed,
-            "beacons_created": log.beacons_created,
-            "beacons_updated": log.beacons_updated,
-            "beacons_deactivated": log.beacons_deactivated,
-            "success": log.success,
-            "error_message": log.error_message,
-        })
-    
-    return {
-        "count": len(result),
-        "logs": result,
-    }
+# Sync logs endpoint - only available when DEBUG_MODE=true
+if settings.debug_mode:
+    @app.get("/api/v1/sync/logs")
+    async def get_sync_logs(
+        session: Session = Depends(get_session),
+        limit: int = Query(default=50, ge=1, le=500, description="Max logs (1-500)"),
+        source: str = Query(default=None, pattern="^(nacional|pais_vasco|cataluna)$", description="Filter by source")
+    ) -> dict[str, Any]:
+        """Get sync operation logs. Only available when DEBUG_MODE=true."""
+        query = select(SyncLog).order_by(SyncLog.sync_started_at.desc()).limit(limit)
+
+        if source:
+            query = query.where(SyncLog.source == source)
+
+        logs = session.exec(query).all()
+
+        result = []
+        for log in logs:
+            duration_seconds = None
+            if log.sync_completed_at and log.sync_started_at:
+                duration_seconds = (log.sync_completed_at - log.sync_started_at).total_seconds()
+
+            result.append({
+                "id": log.id,
+                "source": log.source,
+                "sync_started_at": log.sync_started_at.isoformat() if log.sync_started_at else None,
+                "sync_completed_at": log.sync_completed_at.isoformat() if log.sync_completed_at else None,
+                "sync_duration_seconds": duration_seconds,
+                "beacons_in_feed": log.beacons_in_feed,
+                "beacons_created": log.beacons_created,
+                "beacons_updated": log.beacons_updated,
+                "beacons_deactivated": log.beacons_deactivated,
+                "success": log.success,
+                "error_message": log.error_message,
+            })
+
+        return {
+            "count": len(result),
+            "logs": result,
+        }
 
 
 @app.get("/api/v1/alerts/vulnerable")
 async def get_vulnerable_beacons(
-    min_score: float = 50.0,
+    min_score: float = Query(default=50.0, ge=0, le=100, description="Min score (0-100)"),
     session: Session = Depends(get_session)
 ) -> dict[str, Any]:
-    """Get beacons with high vulnerability scores.
-
-    Args:
-        min_score: Minimum vulnerability score (0-100) to include.
-
-    Returns:
-        List of vulnerable beacons with scores and risk factors.
-    """
+    """Get beacons with high vulnerability scores."""
     from vulnerability import analyze_beacon_vulnerability, HIGH_RISK_THRESHOLD
 
     # Fetch all active beacons and filter to V16 using unified helper
@@ -548,17 +533,10 @@ def calculate_normalized_time_stats(active_times: list[int], exclude_outliers: b
 
 @app.get("/api/v1/stats")
 async def get_stats(
-    days: int = 0,
+    days: int = Query(default=0, ge=0, le=365, description="Time range: 0=realtime, 1-365=days"),
     session: Session = Depends(get_session)
 ) -> dict[str, Any]:
-    """Get statistics about V16 beacons.
-
-    Args:
-        days: Time range filter. 0 = current active only (real-time),
-              1 = today, 7 = last 7 days, 30 = last 30 days.
-
-    Time statistics are normalized to exclude outliers (test activations and system errors).
-    """
+    """Get statistics about V16 beacons."""
     from datetime import datetime, timezone, timedelta
 
     now = datetime.now(timezone.utc)
@@ -662,60 +640,51 @@ async def get_stats(
     }
 
 
-@app.get("/api/v1/debug/beacon-types")
-async def debug_beacon_types(session: Session = Depends(get_session)) -> dict[str, Any]:
-    """Debug endpoint to see unique values of incident_type and detailed_cause_type.
+# Debug endpoint - only available when DEBUG_MODE=true
+if settings.debug_mode:
+    @app.get("/api/v1/debug/beacon-types")
+    async def debug_beacon_types(session: Session = Depends(get_session)) -> dict[str, Any]:
+        """Debug endpoint to see unique values of incident_type and detailed_cause_type.
 
-    This helps diagnose why V16 filtering might not be working.
-    """
-    # Get all active beacons
-    all_active = session.exec(select(Beacon).where(Beacon.is_active == True)).all()
+        This helps diagnose why V16 filtering might not be working.
+        Only available when DEBUG_MODE=true.
+        """
+        all_active = session.exec(select(Beacon).where(Beacon.is_active == True)).all()
 
-    # Collect unique values
-    incident_types: dict[str, int] = {}
-    detailed_cause_types: dict[str, int] = {}
-    source_ids: dict[str, int] = {}
-    v16_matches = 0
+        incident_types: dict[str, int] = {}
+        detailed_cause_types: dict[str, int] = {}
+        source_ids: dict[str, int] = {}
+        v16_matches = 0
 
-    for beacon in all_active:
-        # Count incident_type values
-        it = beacon.incident_type or "(None)"
-        incident_types[it] = incident_types.get(it, 0) + 1
+        for beacon in all_active:
+            it = beacon.incident_type or "(None)"
+            incident_types[it] = incident_types.get(it, 0) + 1
 
-        # Count detailed_cause_type values
-        dct = beacon.detailed_cause_type or "(None)"
-        detailed_cause_types[dct] = detailed_cause_types.get(dct, 0) + 1
+            dct = beacon.detailed_cause_type or "(None)"
+            detailed_cause_types[dct] = detailed_cause_types.get(dct, 0) + 1
 
-        # Count source_identification values
-        si = beacon.source_identification or "(None)"
-        source_ids[si] = source_ids.get(si, 0) + 1
+            si = beacon.source_identification or "(None)"
+            source_ids[si] = source_ids.get(si, 0) + 1
 
-        # Check if matches V16 filter
-        if is_v16_beacon(beacon):
-            v16_matches += 1
+            if is_v16_beacon(beacon):
+                v16_matches += 1
 
-    return {
-        "total_active_beacons": len(all_active),
-        "v16_matches": v16_matches,
-        "v16_filter_logic": "detailed_cause_type == 'vehicleStuck' OR incident_type.lower() == 'vehicleobstruction'",
-        "incident_type_values": dict(sorted(incident_types.items(), key=lambda x: -x[1])),
-        "detailed_cause_type_values": dict(sorted(detailed_cause_types.items(), key=lambda x: -x[1])),
-        "source_identification_values": dict(sorted(source_ids.items(), key=lambda x: -x[1])),
-    }
+        return {
+            "total_active_beacons": len(all_active),
+            "v16_matches": v16_matches,
+            "v16_filter_logic": "detailed_cause_type == 'vehicleStuck' OR incident_type.lower() == 'vehicleobstruction'",
+            "incident_type_values": dict(sorted(incident_types.items(), key=lambda x: -x[1])),
+            "detailed_cause_type_values": dict(sorted(detailed_cause_types.items(), key=lambda x: -x[1])),
+            "source_identification_values": dict(sorted(source_ids.items(), key=lambda x: -x[1])),
+        }
 
 
 @app.get("/api/v1/stats/trends")
 async def get_stats_trends(
-    days: int = 7,
+    days: int = Query(default=7, ge=1, le=90, description="Days for trend data (1-90)"),
     session: Session = Depends(get_session)
 ) -> dict[str, Any]:
-    """Get historical trend data for charts.
-
-    Returns:
-    - hourly_distribution: Incidents by hour of day (0-23) for active V16 beacons
-    - daily_trend: Incidents per day for the last N days
-    - by_source: Distribution by data source
-    """
+    """Get historical trend data for charts."""
     from datetime import datetime, timezone, timedelta
     from collections import defaultdict
 
