@@ -578,18 +578,33 @@ def calculate_normalized_time_stats(active_times: list[int]) -> dict[str, Any]:
 
 
 @app.get("/api/v1/stats")
-async def get_stats(session: Session = Depends(get_session)) -> dict[str, Any]:
-    """Get real-time statistics about active V16 beacons.
+async def get_stats(
+    days: int = 0,
+    session: Session = Depends(get_session)
+) -> dict[str, Any]:
+    """Get statistics about V16 beacons.
+
+    Args:
+        days: Time range filter. 0 = current active only (real-time),
+              1 = today, 7 = last 7 days, 30 = last 30 days.
 
     Time statistics are normalized to exclude outliers (test activations and system errors).
     """
-    from datetime import datetime, timezone
+    from datetime import datetime, timezone, timedelta
 
-    # Fetch all active beacons
-    all_active = session.exec(select(Beacon).where(Beacon.is_active == True)).all()
+    now = datetime.now(timezone.utc)
 
-    # Filter to V16 beacons using the unified helper function
-    beacons = [b for b in all_active if is_v16_beacon(b)]
+    if days == 0:
+        # Real-time: only active beacons
+        all_active = session.exec(select(Beacon).where(Beacon.is_active == True)).all()
+        beacons = [b for b in all_active if is_v16_beacon(b)]
+    else:
+        # Historical range: get beacons created within the time range
+        start_date = now - timedelta(days=days)
+        all_beacons = session.exec(
+            select(Beacon).where(Beacon.created_at >= start_date)
+        ).all()
+        beacons = [b for b in all_beacons if is_v16_beacon(b)]
 
     total_beacons = len(beacons)
 
@@ -598,6 +613,7 @@ async def get_stats(session: Session = Depends(get_session)) -> dict[str, Any]:
             "total_vehicles": 0,
             "avg_minutes_active": 0,
             "median_minutes_active": 0,
+            "period": "realtime" if days == 0 else f"{days}d",
             "time_stats": {
                 "valid_count": 0,
                 "excluded_count": 0,
@@ -611,7 +627,6 @@ async def get_stats(session: Session = Depends(get_session)) -> dict[str, Any]:
     active_times = []
     provinces: dict[str, int] = {}
     road_types: dict[str, int] = {}
-    now = datetime.now(timezone.utc)
 
     for beacon in beacons:
         # Count provinces
@@ -623,13 +638,29 @@ async def get_stats(session: Session = Depends(get_session)) -> dict[str, Any]:
         road_types[rt] = road_types.get(rt, 0) + 1
 
         # Calculate active time
-        if beacon.activation_time:
-            act_time = beacon.activation_time
-            if act_time.tzinfo is None:
-                act_time = act_time.replace(tzinfo=timezone.utc)
-            delta = now - act_time
-            minutes = int(delta.total_seconds() / 60)
-            active_times.append(minutes)
+        if days == 0:
+            # For real-time, calculate from activation_time to now
+            if beacon.activation_time:
+                act_time = beacon.activation_time
+                if act_time.tzinfo is None:
+                    act_time = act_time.replace(tzinfo=timezone.utc)
+                delta = now - act_time
+                minutes = int(delta.total_seconds() / 60)
+                active_times.append(minutes)
+        else:
+            # For historical, calculate actual duration (deleted_at - created_at)
+            if beacon.deleted_at and beacon.created_at:
+                delta = beacon.deleted_at - beacon.created_at
+                minutes = int(delta.total_seconds() / 60)
+                active_times.append(minutes)
+            elif beacon.is_active and beacon.activation_time:
+                # Still active, calculate from activation to now
+                act_time = beacon.activation_time
+                if act_time.tzinfo is None:
+                    act_time = act_time.replace(tzinfo=timezone.utc)
+                delta = now - act_time
+                minutes = int(delta.total_seconds() / 60)
+                active_times.append(minutes)
 
     # Calculate normalized time statistics
     time_stats = calculate_normalized_time_stats(active_times)
@@ -645,6 +676,7 @@ async def get_stats(session: Session = Depends(get_session)) -> dict[str, Any]:
         "total_vehicles": total_beacons,
         "avg_minutes_active": time_stats["avg_minutes"],
         "median_minutes_active": time_stats["median_minutes"],
+        "period": "realtime" if days == 0 else f"{days}d",
         "time_stats": {
             "valid_count": time_stats["valid_count"],
             "excluded_count": time_stats["excluded_count"],

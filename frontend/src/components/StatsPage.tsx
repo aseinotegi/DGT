@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -30,6 +30,7 @@ interface StatsData {
     total_vehicles: number
     avg_minutes_active: number
     median_minutes_active: number
+    period?: string
     time_stats: {
         valid_count: number
         excluded_count: number
@@ -56,6 +57,13 @@ const ROAD_TYPE_LABELS: Record<string, string> = {
     local: 'Locales',
 }
 
+// Period options for the selector
+const PERIOD_OPTIONS = [
+    { value: 0, label: 'Ahora', description: 'Tiempo real' },
+    { value: 7, label: '7 días', description: 'Última semana' },
+    { value: 30, label: '30 días', description: 'Último mes' },
+]
+
 function formatTime(minutes: number): string {
     if (minutes < 60) return `${minutes} min`
     const hours = Math.floor(minutes / 60)
@@ -72,28 +80,30 @@ function StatsPage() {
     const [stats, setStats] = useState<StatsData | null>(null)
     const [trends, setTrends] = useState<TrendsData | null>(null)
     const [loading, setLoading] = useState(true)
+    const [selectedPeriod, setSelectedPeriod] = useState(0) // 0 = realtime, 7 = week, 30 = month
+
+    const fetchData = useCallback(async () => {
+        try {
+            const [statsRes, trendsRes] = await Promise.all([
+                fetch(`${API_BASE}/api/v1/stats?days=${selectedPeriod}`),
+                fetch(`${API_BASE}/api/v1/stats/trends?days=${selectedPeriod === 0 ? 7 : selectedPeriod}`)
+            ])
+
+            if (statsRes.ok) setStats(await statsRes.json())
+            if (trendsRes.ok) setTrends(await trendsRes.json())
+        } catch (err) {
+            console.error('Error fetching stats:', err)
+        } finally {
+            setLoading(false)
+        }
+    }, [selectedPeriod])
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [statsRes, trendsRes] = await Promise.all([
-                    fetch(`${API_BASE}/api/v1/stats`),
-                    fetch(`${API_BASE}/api/v1/stats/trends?days=7`)
-                ])
-
-                if (statsRes.ok) setStats(await statsRes.json())
-                if (trendsRes.ok) setTrends(await trendsRes.json())
-            } catch (err) {
-                console.error('Error fetching stats:', err)
-            } finally {
-                setLoading(false)
-            }
-        }
-
+        setLoading(true)
         fetchData()
         const interval = setInterval(fetchData, 60000)
         return () => clearInterval(interval)
-    }, [])
+    }, [fetchData])
 
     if (loading) {
         return (
@@ -118,10 +128,24 @@ function StatsPage() {
         <div className="peligro-page">
             <header className="peligro-header">
                 <Link to="/" className="back-button">← Volver al mapa</Link>
-                <h1>Estadísticas en tiempo real</h1>
+                <h1>Estadísticas {selectedPeriod === 0 ? 'en tiempo real' : `últimos ${selectedPeriod} días`}</h1>
             </header>
 
             <div className="stats-content">
+                {/* Period Selector */}
+                <div className="stats-period-selector">
+                    {PERIOD_OPTIONS.map((option) => (
+                        <button
+                            key={option.value}
+                            className={`stats-period-btn ${selectedPeriod === option.value ? 'stats-period-btn-active' : ''}`}
+                            onClick={() => setSelectedPeriod(option.value)}
+                        >
+                            <span className="stats-period-label">{option.label}</span>
+                            <span className="stats-period-desc">{option.description}</span>
+                        </button>
+                    ))}
+                </div>
+
                 {/* KPI Cards */}
                 <motion.div
                     className="stats-kpi-grid"
@@ -129,10 +153,13 @@ function StatsPage() {
                     animate="visible"
                     variants={fadeIn}
                     transition={{ duration: 0.3 }}
+                    key={selectedPeriod} // Re-animate on period change
                 >
                     <div className="stats-kpi-card stats-kpi-primary">
                         <div className="stats-kpi-value">{stats?.total_vehicles || 0}</div>
-                        <div className="stats-kpi-label">Balizas V16 activas</div>
+                        <div className="stats-kpi-label">
+                            {selectedPeriod === 0 ? 'Balizas V16 activas' : 'Total balizas V16'}
+                        </div>
                     </div>
 
                     <div className="stats-kpi-card stats-kpi-success">
