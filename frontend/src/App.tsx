@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import BeaconMap from './components/BeaconMap'
 import { StatsPanel } from './components/StatsPanel'
-import './App.css'
+import './index.css'
 
 interface GeoJSONFeature {
     type: 'Feature'
