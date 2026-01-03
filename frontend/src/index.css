@@ -1213,55 +1213,58 @@ header h1 {
   z-index: 1500;
 }
 
-.alert-fab {
-  /* Positioning handled by container */
-  position: relative;
-  bottom: auto;
-  right: auto;
-  padding: 10px 14px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #e74c3c, #c0392b);
-  box-shadow: 0 4px 16px rgba(231, 76, 60, 0.4);
+/* Shared FAB Styles */
+.alert-fab,
+.stats-fab {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 4px;
-  text-decoration: none;
-  z-index: 1500;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  border: none;
   transition: transform 0.2s, box-shadow 0.2s;
+  text-decoration: none;
+  position: relative;
+  /* For badge positioning */
+  padding: 0;
+  /* Reset padding */
 }
 
-.alert-fab:hover {
+.alert-fab:hover,
+.stats-fab:hover {
   transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(231, 76, 60, 0.5);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
-.alert-fab-count {
-  font-size: 20px;
-  font-weight: 700;
-  color: white;
+/* Stats FAB */
+.stats-fab {
+  background: white;
+  color: #1e293b;
+}
+
+.stats-fab-icon {
+  font-size: 24px;
   line-height: 1;
 }
 
+/* Alert FAB Configuration */
+.alert-fab {
+  /* Default background overridden by modifiers */
+  background: white;
+}
+
 .alert-fab-icon {
-  width: 28px;
-  height: 28px;
-  object-fit: contain;
+  font-size: 24px;
+  line-height: 1;
 }
 
-.alert-fab-label {
-  font-size: 9px;
-  color: rgba(255, 255, 255, 0.7);
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  text-align: center;
-  line-height: 1.2;
-  max-width: 70px;
-}
-
-/* FAB Color Variants based on risk level */
+/* Alert FAB Color Variants */
 .alert-fab-critical {
   background: linear-gradient(135deg, #dc2626, #991b1b);
+  color: white;
   box-shadow: 0 4px 16px rgba(220, 38, 38, 0.4);
 }
 
@@ -1271,38 +1274,41 @@ header h1 {
 
 .alert-fab-medium {
   background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
   box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
 }
 
 .alert-fab-medium:hover {
   box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5);
-  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5);
 }
 
-/* Stats FAB */
-.stats-fab {
+/* Badge for Count */
+.alert-fab-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
   background: white;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  padding: 0;
+  color: #1e293b;
+  font-size: 11px;
+  font-weight: 800;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  cursor: pointer;
-  border: none;
-  transition: transform 0.2s, box-shadow 0.2s;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 0 4px;
 }
 
-.stats-fab:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+/* Adjust badge text color for variants to match button */
+.alert-fab-critical .alert-fab-badge {
+  color: #dc2626;
 }
 
-.stats-fab-icon {
-  font-size: 24px;
-  line-height: 1;
+.alert-fab-medium .alert-fab-badge {
+  color: #d97706;
 }
 
 /* ========================================
