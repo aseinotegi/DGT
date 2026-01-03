@@ -177,8 +177,24 @@ async def get_beacons(session: Session = Depends(get_session)) -> dict[str, Any]
     beacons = session.exec(select(Beacon).where(Beacon.is_active == True)).all()
     
     # Build GeoJSON FeatureCollection
+    from datetime import datetime, timezone
+    
     features = []
+    now_utc = datetime.now(timezone.utc)
+    MAX_HOURS_BEFORE_STALE = 15
+    
     for beacon in beacons:
+        # Calculate minutes active
+        minutes_active = 0
+        is_stale = False
+        if beacon.activation_time:
+            activation = beacon.activation_time
+            if activation.tzinfo is None:
+                activation = activation.replace(tzinfo=timezone.utc)
+            delta = now_utc - activation
+            minutes_active = int(delta.total_seconds() / 60)
+            is_stale = minutes_active > (MAX_HOURS_BEFORE_STALE * 60)
+        
         feature = {
             "type": "Feature",
             "geometry": {
@@ -208,7 +224,9 @@ async def get_beacons(session: Session = Depends(get_session)) -> dict[str, Any]
                     beacon.incident_type.lower() == "vehicleobstruction" or
                     (beacon.incident_type.lower() == "environmentalobstruction" and beacon.detailed_cause_type == "vehicleStuck") or
                     (beacon.incident_type.lower() == "obstruction" and beacon.detailed_cause_type == "vehicleStuck")
-                )
+                ),
+                "minutes_active": minutes_active,
+                "is_stale": is_stale,
             }
         }
         features.append(feature)

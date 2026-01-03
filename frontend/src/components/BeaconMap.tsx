@@ -28,6 +28,8 @@ interface GeoJSONFeature {
         source_identification: string | null
         detailed_cause_type: string | null
         is_v16: boolean
+        minutes_active: number
+        is_stale: boolean
     }
 }
 
@@ -135,7 +137,8 @@ function BeaconMap({ data }: BeaconMapProps) {
                     const [lng, lat] = feature.geometry.coordinates
                     const {
                         road_name, municipality, province,
-                        direction, pk, autonomous_community, activation_time
+                        direction, pk, autonomous_community, activation_time,
+                        is_stale, minutes_active
                     } = feature.properties
 
                     return (
@@ -143,18 +146,23 @@ function BeaconMap({ data }: BeaconMapProps) {
                             key={feature.properties.id}
                             position={[lat, lng]}
                             icon={v16Icon}
+                            opacity={is_stale ? 0.4 : 1}
                         >
                             <Popup className="popup-minimal">
                                 <div className="pm">
                                     <div className="pm-header">
                                         <img src="/baliza.jpg" alt="" />
-                                        <span>Baliza activa</span>
+                                        <span>
+                                            Baliza activa
+                                            {is_stale && <span className="stale-badge">posible error</span>}
+                                        </span>
                                     </div>
                                     <div className="pm-body">
                                         <p><b>Causa:</b> Vehículo detenido</p>
                                         {road_name && <p><b>Carretera (ppkk):</b> <span className="hl">{road_name}{pk ? ` (PK ${pk})` : ''}</span></p>}
                                         {direction && <p><b>Sentido:</b> {direction}</p>}
                                         {activation_time && <p><b>Desde:</b> <span className="hl">{formatDateTime(activation_time)}</span></p>}
+                                        {minutes_active > 0 && <p><b>Tiempo activo:</b> {Math.floor(minutes_active / 60)}h {minutes_active % 60}m</p>}
                                         {(province || autonomous_community) && <p><b>Provincia:</b> {province || autonomous_community}</p>}
                                         {municipality && <p><b>Municipio:</b> {municipality}</p>}
                                     </div>

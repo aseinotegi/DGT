@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { Link } from 'react-router-dom'
 import BeaconMap from './components/BeaconMap'
 import './index.css'
 
@@ -27,6 +28,8 @@ interface GeoJSONFeature {
         source_identification: string | null
         detailed_cause_type: string | null
         is_v16: boolean
+        minutes_active: number
+        is_stale: boolean
     }
 }
 
@@ -55,6 +58,12 @@ interface VulnerableAlert {
     risk_level: string
     risk_factors: string[]
     minutes_active: number
+    scores: {
+        isolation: number
+        exposure: number
+        nighttime: number
+        road_type: number
+    }
 }
 
 interface AlertsResponse {
@@ -164,26 +173,33 @@ function App() {
                 </div>
             </header>
 
-            {/* Alert Panel - Simple version */}
+            {/* Alert Panel - Enhanced with scores */}
             {showAlertPanel && criticalAlerts.length > 0 && (
                 <div className="alert-simple">
                     <div className="alert-simple-header">
                         <span>Posibles personas en apuros</span>
-                        <button onClick={() => setShowAlertPanel(false)}>×</button>
+                        <div className="alert-header-actions">
+                            <Link to="/peligro" className="see-all-link">Ver todos</Link>
+                            <button onClick={() => setShowAlertPanel(false)}>×</button>
+                        </div>
                     </div>
                     <ul className="alert-simple-list">
                         {criticalAlerts.slice(0, 5).map((alert) => (
                             <li key={alert.beacon_id}>
-                                <div className="alert-simple-location">
-                                    {alert.road_name || 'Carretera'} - {alert.municipality}
-                                </div>
-                                <a
-                                    href={`https://www.google.com/maps?q=${alert.lat},${alert.lng}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                >
-                                    Ver ubicación
-                                </a>
+                                <Link to={`/peligro?id=${alert.beacon_id}`} className="alert-link">
+                                    <span
+                                        className="score-badge"
+                                        style={{
+                                            backgroundColor: alert.risk_level === 'critical' ? '#dc2626' :
+                                                alert.risk_level === 'high' ? '#ea580c' : '#ca8a04'
+                                        }}
+                                    >
+                                        {alert.total_score.toFixed(0)}
+                                    </span>
+                                    <div className="alert-simple-location">
+                                        {alert.road_name || 'Carretera'} - {alert.municipality}
+                                    </div>
+                                </Link>
                             </li>
                         ))}
                     </ul>
