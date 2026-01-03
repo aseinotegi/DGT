@@ -755,18 +755,18 @@ async def get_stats_trends(
 
     v16_beacons = [b for b in all_beacons if is_v16_beacon(b)]
 
-    # 1. Hourly distribution (using activation_time of active beacons only)
-    active_v16 = [b for b in v16_beacons if b.is_active]
+    # 1. Hourly distribution - use ALL beacons in period, not just active ones
+    # For historical view, we want to see when incidents occurred throughout the day
     hourly: dict[int, int] = defaultdict(int)
 
-    for beacon in active_v16:
-        if beacon.activation_time:
-            # Use local Spain time (UTC+1 or UTC+2)
-            act_time = beacon.activation_time
-            if act_time.tzinfo is None:
-                act_time = act_time.replace(tzinfo=timezone.utc)
+    for beacon in v16_beacons:
+        # Use activation_time if available, otherwise created_at
+        timestamp = beacon.activation_time or beacon.created_at
+        if timestamp:
+            if timestamp.tzinfo is None:
+                timestamp = timestamp.replace(tzinfo=timezone.utc)
             # Approximate Spain timezone (UTC+1)
-            spain_hour = (act_time.hour + 1) % 24
+            spain_hour = (timestamp.hour + 1) % 24
             hourly[spain_hour] += 1
 
     # Fill all 24 hours
@@ -791,7 +791,8 @@ async def get_stats_trends(
             "count": daily.get(day_str, 0)
         })
 
-    # 3. By source distribution
+    # 3. By source distribution (for active beacons)
+    active_v16 = [b for b in v16_beacons if b.is_active]
     by_source: dict[str, int] = defaultdict(int)
     for beacon in active_v16:
         by_source[beacon.source] += 1
