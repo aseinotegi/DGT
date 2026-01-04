@@ -273,7 +273,11 @@ function App() {
                         aria-label="Mostrar mi ubicación"
                         disabled={locatingUser}
                     >
-                        {locatingUser ? '⏳' : '📍'}
+                        {locatingUser ? '...' : ''}
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="12" cy="12" r="3" />
+                            <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
+                        </svg>
                     </button>
 
                     <Link
@@ -282,7 +286,9 @@ function App() {
                         title="Estadísticas"
                         aria-label="Ver estadísticas"
                     >
-                        📊
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M18 20V10M12 20V4M6 20v-6" />
+                        </svg>
                     </Link>
 
                     <Link
@@ -291,10 +297,27 @@ function App() {
                         title="Alertas de vulnerabilidad"
                         aria-label="Ver personas vulnerables"
                     >
-                        ⚠️
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                            <line x1="12" y1="9" x2="12" y2="13" />
+                            <line x1="12" y1="17" x2="12.01" y2="17" />
+                        </svg>
                         {validAlerts.length > 0 && (
                             <span className="fab-badge">{validAlerts.length}</span>
                         )}
+                    </Link>
+
+                    <Link
+                        to="/info"
+                        className="fab-btn fab-info"
+                        title="Información"
+                        aria-label="Ver información sobre V16"
+                    >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="16" x2="12" y2="12" />
+                            <line x1="12" y1="8" x2="12.01" y2="8" />
+                        </svg>
                     </Link>
                 </div>
             </main>

@@ -1,0 +1,268 @@
+/* InfoPage Styles */
+.info-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #f8fafc;
+}
+
+.info-header {
+    background: #34495e;
+    color: white;
+    padding: 0 16px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.info-header .back-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    color: white;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.info-header .back-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.info-header h1 {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.info-content {
+    flex: 1;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 24px 20px 48px;
+    width: 100%;
+}
+
+.info-section {
+    margin-bottom: 40px;
+}
+
+.info-section h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.info-section>p {
+    color: #475569;
+    line-height: 1.7;
+    margin-bottom: 20px;
+}
+
+.info-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.info-card h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 12px;
+}
+
+.info-card p {
+    color: #475569;
+    line-height: 1.6;
+    margin-bottom: 12px;
+}
+
+.info-card p:last-child {
+    margin-bottom: 0;
+}
+
+.info-card ul {
+    margin: 0;
+    padding-left: 20px;
+    color: #475569;
+}
+
+.info-card ul li {
+    margin-bottom: 8px;
+    line-height: 1.5;
+}
+
+.info-card ul li:last-child {
+    margin-bottom: 0;
+}
+
+.info-card-highlight {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+}
+
+.info-card-highlight h3 {
+    color: white;
+}
+
+.info-card-highlight p {
+    color: rgba(255, 255, 255, 0.95);
+}
+
+/* Factors Table */
+.factors-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.factors-table th,
+.factors-table td {
+    text-align: left;
+    padding: 12px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.factors-table th {
+    font-weight: 600;
+    color: #64748b;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.factors-table td {
+    color: #475569;
+}
+
+.factors-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Alert Levels */
+.alert-levels {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.alert-level {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px;
+    border-radius: 8px;
+}
+
+.level-score {
+    flex-shrink: 0;
+    width: 60px;
+    padding: 8px 0;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    border-radius: 6px;
+    color: white;
+}
+
+.alert-level div strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.alert-level div p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.alert-level-critical {
+    background: #fef2f2;
+}
+
+.alert-level-critical .level-score {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.alert-level-critical strong {
+    color: #b91c1c;
+}
+
+.alert-level-high {
+    background: #fff7ed;
+}
+
+.alert-level-high .level-score {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+}
+
+.alert-level-high strong {
+    color: #c2410c;
+}
+
+.alert-level-medium {
+    background: #fefce8;
+}
+
+.alert-level-medium .level-score {
+    background: linear-gradient(135deg, #eab308, #ca8a04);
+}
+
+.alert-level-medium strong {
+    color: #a16207;
+}
+
+/* Links in info page */
+.info-section a {
+    color: #3b82f6;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.info-section a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .info-content {
+        padding: 16px 16px 40px;
+    }
+
+    .info-section h2 {
+        font-size: 1.25rem;
+    }
+
+    .info-card {
+        padding: 16px;
+    }
+
+    .factors-table {
+        font-size: 0.8rem;
+    }
+
+    .factors-table th,
+    .factors-table td {
+        padding: 8px 6px;
+    }
+
+    .alert-level {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .level-score {
+        width: auto;
+        padding: 6px 16px;
+    }
+}

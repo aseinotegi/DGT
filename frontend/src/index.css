@@ -1296,6 +1296,35 @@ header h1 {
   }
 }
 
+/* Info button - Gray/neutral */
+.fab-info {
+  background: #64748b;
+  box-shadow: 0 2px 8px rgba(100, 116, 139, 0.35);
+}
+
+.fab-info:hover {
+  background: #475569;
+  box-shadow: 0 4px 12px rgba(100, 116, 139, 0.45);
+}
+
+/* SVG icons in FABs */
+.fab-btn svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 2;
+}
+
+.fab-location svg,
+.fab-alerts svg,
+.fab-alerts-critical svg,
+.fab-info svg {
+  stroke: white;
+}
+
+.fab-stats svg {
+  stroke: #1e293b;
+}
+
 /* Badge for count */
 .fab-badge {
   position: absolute;
