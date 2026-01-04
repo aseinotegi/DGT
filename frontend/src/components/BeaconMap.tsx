@@ -1,7 +1,8 @@
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, useMap, Circle } from 'react-leaflet'
 import MarkerClusterGroup from 'react-leaflet-cluster'
 import L, { LatLngTuple } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { useEffect } from 'react'
 
 interface GeoJSONFeature {
     type: 'Feature'
@@ -48,6 +49,9 @@ interface GeoJSONData {
 
 interface BeaconMapProps {
     data: GeoJSONData | null
+    userLocation?: [number, number] | null
+    onLocateUser?: () => void
+    isLocating?: boolean
 }
 
 const CENTER: LatLngTuple = [40.4168, -3.7038]
@@ -96,7 +100,20 @@ function formatDateTime(isoString: string | null): string {
     }
 }
 
-function BeaconMap({ data }: BeaconMapProps) {
+// Component to handle flying to user location
+function FlyToLocation({ location }: { location: [number, number] | null }) {
+    const map = useMap()
+
+    useEffect(() => {
+        if (location) {
+            map.flyTo(location, 12, { duration: 1.5 })
+        }
+    }, [location, map])
+
+    return null
+}
+
+function BeaconMap({ data, userLocation }: BeaconMapProps) {
     const v16Icon = getIcon('/baliza.jpg')
 
     const openGoogleMaps = (lat: number, lng: number) => {
@@ -124,6 +141,33 @@ function BeaconMap({ data }: BeaconMapProps) {
                 attribution='OpenStreetMap'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
+
+            <FlyToLocation location={userLocation ?? null} />
+
+            {/* User location marker */}
+            {userLocation && (
+                <>
+                    <Circle
+                        center={userLocation}
+                        radius={500}
+                        pathOptions={{
+                            color: '#3b82f6',
+                            fillColor: '#3b82f6',
+                            fillOpacity: 0.15,
+                            weight: 2
+                        }}
+                    />
+                    <Marker
+                        position={userLocation}
+                        icon={L.divIcon({
+                            html: '<div class="user-location-marker"></div>',
+                            className: 'user-location-icon',
+                            iconSize: [16, 16],
+                            iconAnchor: [8, 8],
+                        })}
+                    />
+                </>
+            )}
 
             <MarkerClusterGroup
                 chunkedLoading
@@ -167,8 +211,18 @@ function BeaconMap({ data }: BeaconMapProps) {
                                         {municipality && <p><b>Municipio:</b> {municipality}</p>}
                                     </div>
                                     <div className="pm-actions">
-                                        <button onClick={() => openGoogleMaps(lat, lng)}>Mapas</button>
-                                        <button onClick={() => shareLocation(lat, lng, road_name)}>Compartir</button>
+                                        <button
+                                            className="pm-action-primary"
+                                            onClick={() => openGoogleMaps(lat, lng)}
+                                        >
+                                            📍 Ver en GPS
+                                        </button>
+                                        <button
+                                            className="pm-action-secondary"
+                                            onClick={() => shareLocation(lat, lng, road_name)}
+                                        >
+                                            Compartir
+                                        </button>
                                     </div>
                                 </div>
                             </Popup>
@@ -181,3 +235,4 @@ function BeaconMap({ data }: BeaconMapProps) {
 }
 
 export default BeaconMap
+

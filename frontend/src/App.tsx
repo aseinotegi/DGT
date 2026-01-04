@@ -83,6 +83,8 @@ function App() {
     const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
     const [alerts, setAlerts] = useState<VulnerableAlert[]>([])
     const [showAlertPanel, setShowAlertPanel] = useState(false)
+    const [userLocation, setUserLocation] = useState<[number, number] | null>(null)
+    const [locatingUser, setLocatingUser] = useState(false)
 
     const [filterV16Only] = useState<boolean>(true)
 
@@ -117,6 +119,41 @@ function App() {
         } catch (err) {
             console.error('Error fetching alerts:', err)
         }
+    }, [])
+
+    // Format time ago for "Actualizado hace X"
+    const formatTimeAgo = (date: Date): string => {
+        const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000)
+        if (seconds < 60) return `${seconds} seg`
+        const minutes = Math.floor(seconds / 60)
+        if (minutes < 60) return `${minutes} min`
+        return `${Math.floor(minutes / 60)}h ${minutes % 60}m`
+    }
+
+    // Geolocation handler
+    const handleLocateUser = useCallback(() => {
+        if (!navigator.geolocation) {
+            alert('Tu navegador no soporta geolocalización')
+            return
+        }
+        setLocatingUser(true)
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords
+                setUserLocation([latitude, longitude])
+                setLocatingUser(false)
+            },
+            (error) => {
+                console.error('Geolocation error:', error)
+                setLocatingUser(false)
+                if (error.code === error.PERMISSION_DENIED) {
+                    alert('Permiso de ubicación denegado. Habilítalo en tu navegador.')
+                } else {
+                    alert('No se pudo obtener tu ubicación')
+                }
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        )
     }, [])
 
     useEffect(() => {
@@ -166,8 +203,8 @@ function App() {
                         {filteredCount} balizas activas
                     </span>
                     {lastUpdate && (
-                        <span className="last-update">
-                            {lastUpdate.toLocaleTimeString()}
+                        <span className="last-update" title={lastUpdate.toLocaleTimeString()}>
+                            Actualizado hace {formatTimeAgo(lastUpdate)}
                         </span>
                     )}
                 </div>
@@ -220,16 +257,32 @@ function App() {
                     </div>
                 )}
 
-                <BeaconMap data={filteredData} />
+                <BeaconMap
+                    data={filteredData}
+                    userLocation={userLocation}
+                    onLocateUser={handleLocateUser}
+                    isLocating={locatingUser}
+                />
 
                 {/* Floating Action Buttons */}
                 <div className="fab-container">
+                    <button
+                        onClick={handleLocateUser}
+                        className={`alert-fab location-fab ${locatingUser ? 'locating' : ''}`}
+                        title="Mostrar mi ubicación"
+                        disabled={locatingUser}
+                    >
+                        <span className="fab-icon">{locatingUser ? '⏳' : '📍'}</span>
+                        <span className="fab-label">Cerca de mí</span>
+                    </button>
+
                     <Link
                         to="/stats"
                         className="alert-fab stats-fab"
                         title="Ver estadísticas"
                     >
-                        <span className="stats-fab-icon">📊</span>
+                        <span className="fab-icon">📊</span>
+                        <span className="fab-label">Estadísticas</span>
                     </Link>
 
                     <Link
@@ -237,7 +290,8 @@ function App() {
                         className={`alert-fab ${criticalAlerts.length > 0 ? 'alert-fab-critical' : 'alert-fab-medium'}`}
                         title="Ver personas vulnerables"
                     >
-                        <span className="alert-fab-icon">⚠️</span>
+                        <span className="fab-icon">⚠️</span>
+                        <span className="fab-label">Alertas</span>
                         {validAlerts.length > 0 && (
                             <span className="alert-fab-badge">{validAlerts.length}</span>
                         )}
@@ -248,7 +302,7 @@ function App() {
             <footer className="site-footer">
                 <span>© 2026</span>
                 <span className="footer-separator">|</span>
-                <span>Desarrollado por <a href="https://mapabalizasv16.info" target="_blank" rel="noopener noreferrer">Ander Sein</a></span>
+                <span>Desarrollado por <a href="https://www.linkedin.com/in/ander-sein-a24097195/" target="_blank" rel="noopener noreferrer">Ander Sein</a></span>
             </footer>
         </div>
     )

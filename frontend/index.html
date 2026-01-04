@@ -120,7 +120,7 @@
         "name": "¿Qué es una baliza V16?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "La baliza V16 es un dispositivo luminoso de emergencia obligatorio en España desde 2026. Emite una señal que permite localizar vehículos detenidos en la carretera y alertar a otros conductores."
+          "text": "La baliza V16 es un dispositivo luminoso de emergencia obligatorio en España desde 2026. Emite una señal que permite localizar vehículos detenidos en la carretera y alertar a otros conductores. Se coloca sobre el techo del vehículo y emite luz amarilla visible a 1 km de distancia."
         }
       },
       {
@@ -128,7 +128,7 @@
         "name": "¿Cómo funciona el mapa de balizas V16?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "El mapa muestra en tiempo real la ubicación de todas las balizas V16 activas en España, utilizando datos oficiales de la DGT actualizados cada minuto."
+          "text": "El mapa muestra en tiempo real la ubicación de todas las balizas V16 activas en España, utilizando datos oficiales de la DGT actualizados cada minuto. Puedes ver la carretera, punto kilométrico, municipio y tiempo que lleva activa cada baliza."
         }
       },
       {
@@ -136,7 +136,47 @@
         "name": "¿Es obligatoria la baliza V16?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Sí, desde el 1 de enero de 2026 es obligatorio llevar una baliza V16 conectada en todos los vehículos en España, sustituyendo a los triángulos de emergencia."
+          "text": "Sí, desde el 1 de enero de 2026 es obligatorio llevar una baliza V16 conectada (con geolocalización DGT) en todos los vehículos en España, sustituyendo a los triángulos de emergencia. Las balizas sin conexión DGT serán válidas hasta 2030."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "¿De dónde vienen los datos del mapa?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Los datos provienen del sistema oficial DATEX II de la Dirección General de Tráfico (DGT). Recibimos información de tres fuentes: la red nacional, la red autonómica del País Vasco y la red autonómica de Cataluña. Los datos se actualizan cada 60 segundos."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "¿Qué significa cuando una baliza aparece como 'posible error'?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Cuando una baliza lleva más de 10 horas activa, la marcamos como 'posible error' ya que es probable que se trate de un fallo en el sistema de la DGT y no de un vehículo realmente detenido. Estas balizas se muestran con menor opacidad en el mapa."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "¿Qué son las alertas de personas vulnerables?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "El sistema analiza cada baliza activa para identificar conductores en situación de riesgo. Se evalúan factores como el aislamiento (distancia a núcleos urbanos), tiempo activo, horario nocturno y tipo de vía. Las alertas de vulnerabilidad ayudan a identificar personas que podrían necesitar asistencia."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "¿Puedo ver las estadísticas de balizas V16?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Sí, la sección de Estadísticas muestra datos agregados como el número de balizas activas, tiempo medio de activación, distribución horaria, tendencias diarias, provincias con más incidencias y tipos de vía más afectados. Puedes filtrar por período: tiempo real, últimos 7 días o último mes."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "¿Cómo puedo ver si hay balizas cerca de mi ubicación?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Pulsa el botón 'Cerca de mí' en el lateral izquierdo del mapa. El sistema solicitará permiso para acceder a tu ubicación y centrará el mapa en tu posición, mostrando las balizas activas en tu zona con un radio de 500 metros resaltado."
         }
       }
     ]

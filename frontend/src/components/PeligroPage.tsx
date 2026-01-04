@@ -232,7 +232,7 @@ function PeligroPage() {
             <footer className="site-footer">
                 <span>© 2026</span>
                 <span className="footer-separator">|</span>
-                <span>Desarrollado por <a href="https://mapabalizasv16.info" target="_blank" rel="noopener noreferrer">Ander Sein</a></span>
+                <span>Desarrollado por <a href="https://www.linkedin.com/in/ander-sein-a24097195/" target="_blank" rel="noopener noreferrer">Ander Sein</a></span>
             </footer>
         </div>
     )

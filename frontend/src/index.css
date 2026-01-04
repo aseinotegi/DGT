@@ -1210,35 +1210,45 @@ header h1 {
   transform: translateY(-50%);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   z-index: 1500;
-  align-items: center;
+  align-items: flex-start;
 }
 
-/* Shared FAB Styles */
+/* Shared FAB Styles - Pill shape with labels */
 .alert-fab,
 .stats-fab {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
   display: flex;
   align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   cursor: pointer;
   border: none;
   transition: transform 0.2s, box-shadow 0.2s;
   text-decoration: none;
   position: relative;
-  /* For badge positioning */
-  padding: 0;
-  /* Reset padding */
+  font-family: inherit;
+  background: white;
 }
 
 .alert-fab:hover,
 .stats-fab:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.fab-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.fab-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
 }
 
 /* Stats FAB */
@@ -1247,41 +1257,53 @@ header h1 {
   color: #1e293b;
 }
 
-.stats-fab-icon {
-  font-size: 24px;
-  line-height: 1;
+/* Location FAB */
+.location-fab {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
 }
 
-/* Alert FAB Configuration */
-.alert-fab {
-  /* Default background overridden by modifiers */
-  background: white;
+.location-fab .fab-label {
+  color: white;
 }
 
-.alert-fab-icon {
-  font-size: 24px;
-  line-height: 1;
+.location-fab:hover {
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
+}
+
+.location-fab.locating {
+  opacity: 0.7;
+  cursor: wait;
 }
 
 /* Alert FAB Color Variants */
 .alert-fab-critical {
   background: linear-gradient(135deg, #dc2626, #991b1b);
   color: white;
-  box-shadow: 0 4px 16px rgba(220, 38, 38, 0.4);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
+}
+
+.alert-fab-critical .fab-label {
+  color: white;
 }
 
 .alert-fab-critical:hover {
-  box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.5);
 }
 
 .alert-fab-medium {
   background: linear-gradient(135deg, #f59e0b, #d97706);
   color: white;
-  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+}
+
+.alert-fab-medium .fab-label {
+  color: white;
 }
 
 .alert-fab-medium:hover {
-  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.5);
 }
 
 /* Badge for Count */
@@ -1304,13 +1326,67 @@ header h1 {
   padding: 0 4px;
 }
 
-/* Adjust badge text color for variants to match button */
 .alert-fab-critical .alert-fab-badge {
   color: #dc2626;
 }
 
 .alert-fab-medium .alert-fab-badge {
   color: #d97706;
+}
+
+/* User Location Marker */
+.user-location-icon {
+  background: transparent;
+}
+
+.user-location-marker {
+  width: 16px;
+  height: 16px;
+  background: #3b82f6;
+  border: 3px solid white;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.5);
+}
+
+/* Popup Action Buttons - Primary/Secondary */
+.pm-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.pm-action-primary {
+  flex: 1;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pm-action-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.pm-action-secondary {
+  padding: 10px 16px;
+  background: #f1f5f9;
+  color: #475569;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pm-action-secondary:hover {
+  background: #e2e8f0;
 }
 
 /* ========================================
