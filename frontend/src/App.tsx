@@ -273,10 +273,12 @@ function App() {
                         aria-label="Mostrar mi ubicación"
                         disabled={locatingUser}
                     >
-                        {locatingUser ? '...' : ''}
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="12" cy="12" r="3" />
-                            <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
+                            <line x1="12" y1="2" x2="12" y2="6" />
+                            <line x1="12" y1="18" x2="12" y2="22" />
+                            <line x1="2" y1="12" x2="6" y2="12" />
+                            <line x1="18" y1="12" x2="22" y2="12" />
                         </svg>
                     </button>
 
@@ -286,8 +288,10 @@ function App() {
                         title="Estadísticas"
                         aria-label="Ver estadísticas"
                     >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M18 20V10M12 20V4M6 20v-6" />
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="18" y1="20" x2="18" y2="10" />
+                            <line x1="12" y1="20" x2="12" y2="4" />
+                            <line x1="6" y1="20" x2="6" y2="14" />
                         </svg>
                     </Link>
 
@@ -297,10 +301,10 @@ function App() {
                         title="Alertas de vulnerabilidad"
                         aria-label="Ver personas vulnerables"
                     >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
                             <line x1="12" y1="9" x2="12" y2="13" />
-                            <line x1="12" y1="17" x2="12.01" y2="17" />
+                            <circle cx="12" cy="17" r="0.5" fill="currentColor" />
                         </svg>
                         {validAlerts.length > 0 && (
                             <span className="fab-badge">{validAlerts.length}</span>
@@ -313,10 +317,10 @@ function App() {
                         title="Información"
                         aria-label="Ver información sobre V16"
                     >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="12" cy="12" r="10" />
                             <line x1="12" y1="16" x2="12" y2="12" />
-                            <line x1="12" y1="8" x2="12.01" y2="8" />
+                            <circle cx="12" cy="8" r="0.5" fill="currentColor" />
                         </svg>
                     </Link>
                 </div>
