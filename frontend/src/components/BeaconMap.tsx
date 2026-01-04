@@ -215,7 +215,7 @@ function BeaconMap({ data, userLocation }: BeaconMapProps) {
                                             className="pm-action-primary"
                                             onClick={() => openGoogleMaps(lat, lng)}
                                         >
-                                            📍 Ver en GPS
+                                            Ver en GPS
                                         </button>
                                         <button
                                             className="pm-action-secondary"
