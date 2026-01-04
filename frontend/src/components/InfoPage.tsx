@@ -167,9 +167,6 @@ function InfoPage() {
                         el objetivo de mejorar la seguridad vial en España mediante la visualización
                         de datos públicos de tráfico.
                     </p>
-                    <p>
-                        El código fuente está disponible en <a href="https://github.com/aseinotegi/DGT" target="_blank" rel="noopener noreferrer">GitHub</a>.
-                    </p>
                 </section>
             </main>
 
