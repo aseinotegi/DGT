@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import BeaconMap from './components/BeaconMap'
+import BeaconMap from './components/BeaconMap/BeaconMap'
 import './index.css'
 
 interface GeoJSONFeature {
