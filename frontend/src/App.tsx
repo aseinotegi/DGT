@@ -264,36 +264,36 @@ function App() {
                     isLocating={locatingUser}
                 />
 
-                {/* Floating Action Buttons */}
+                {/* Floating Action Buttons - Minimal icons */}
                 <div className="fab-container">
                     <button
                         onClick={handleLocateUser}
-                        className={`alert-fab location-fab ${locatingUser ? 'locating' : ''}`}
-                        title="Mostrar mi ubicación"
+                        className={`fab-btn fab-location ${locatingUser ? 'fab-loading' : ''}`}
+                        title="Cerca de mí"
+                        aria-label="Mostrar mi ubicación"
                         disabled={locatingUser}
                     >
-                        <span className="fab-icon">{locatingUser ? '⏳' : '📍'}</span>
-                        <span className="fab-label">Cerca de mí</span>
+                        {locatingUser ? '⏳' : '📍'}
                     </button>
 
                     <Link
                         to="/stats"
-                        className="alert-fab stats-fab"
-                        title="Ver estadísticas"
+                        className="fab-btn fab-stats"
+                        title="Estadísticas"
+                        aria-label="Ver estadísticas"
                     >
-                        <span className="fab-icon">📊</span>
-                        <span className="fab-label">Estadísticas</span>
+                        📊
                     </Link>
 
                     <Link
                         to="/peligro"
-                        className={`alert-fab ${criticalAlerts.length > 0 ? 'alert-fab-critical' : 'alert-fab-medium'}`}
-                        title="Ver personas vulnerables"
+                        className={`fab-btn fab-alerts ${criticalAlerts.length > 0 ? 'fab-alerts-critical' : ''}`}
+                        title="Alertas de vulnerabilidad"
+                        aria-label="Ver personas vulnerables"
                     >
-                        <span className="fab-icon">⚠️</span>
-                        <span className="fab-label">Alertas</span>
+                        ⚠️
                         {validAlerts.length > 0 && (
-                            <span className="alert-fab-badge">{validAlerts.length}</span>
+                            <span className="fab-badge">{validAlerts.length}</span>
                         )}
                     </Link>
                 </div>
