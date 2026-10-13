@@ -1,0 +1,15 @@
+{
+  "name": "dgt-rea-tools",
+  "private": true,
+  "type": "module",
+  "description": "Analisis de webs con REA (rea-agents) en local: CLI y servidor en 127.0.0.1",
+  "engines": { "node": "^22.19.0 || ^24.11.0 || >=26.0.0" },
+  "scripts": {
+    "analizar": "node analizar.mjs",
+    "servidor": "node servidor.mjs",
+    "doctor": "rea doctor"
+  },
+  "dependencies": {
+    "rea-agents": "6.4.0"
+  }
+}
