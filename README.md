@@ -2,6 +2,8 @@
 
 Visualización en tiempo real de vehículos detenidos en carreteras españolas, con sistema de detección de personas vulnerables.
 
+Más proyectos míos en **[andersein.com](https://andersein.com)**.
+
 **Acceso**: [mapabalizasv16.info](https://mapabalizasv16.info)
 
 ---
